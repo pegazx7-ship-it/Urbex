@@ -128,9 +128,9 @@ function viewPlan(w){
   $('#body').innerHTML=`
   <h2>1 · Start</h2><div class="card">${w.start?pt(w.start):'<span class="mut">Moja lokalizacja (pobierana przy układaniu trasy)</span>'}
    <input id="si" placeholder="Miasto lub link Google Maps" style="margin-top:10px">
-   <div class="row"><button class="s" data-a="sg">📍 Moja lokalizacja</button><button data-a="ss">Ustaw start</button></div></div>
+   <div class="row"><button class="s" data-a="sg">📍 Moja lokalizacja</button><button data-a="ss">Ustaw start</button></div><div id="ms" class="mut" style="margin-top:8px"></div></div>
   <h2>2 · Cel podróży</h2><div class="card">${pt(w.dest)}
-   <input id="di" placeholder="Miasto lub link Google Maps" style="margin-top:10px"><button class="w" data-a="ds">Ustaw cel</button></div>
+   <input id="di" placeholder="Miasto lub link Google Maps" style="margin-top:10px"><button class="w" data-a="ds">Ustaw cel</button><div id="md" class="mut" style="margin-top:8px"></div></div>
   <h2>3 · Miejsca urbexu (${todo.length})</h2><div class="card">
    <label>Wklej link z Google Maps, współrzędne lub nazwę miejscowości. Kilka naraz, każde w osobnej linii. Opcjonalnie „Co to za miejsce | link”.</label>
    <textarea id="paste" rows="3" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z"></textarea>
@@ -225,6 +225,25 @@ function outK(w){
    +row('Nocleg',c.lod?money(c.lod):'–')+row('Inne koszty',c.oth?money(c.oth):'–')+row('Razem',money(c.total),1)
    +row('Liczba osób',c.hasPeople?c.n:'wpisz liczbę osób powyżej')+row('Paliwo na osobę',money(c.fpp))+row('Całość na osobę',money(c.tpp),1);
 }
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const setMsg=t=>{const m=$('#msg');if(m)m.textContent=t};
+const FAIL='Nie znaleziono. Wpisz inną nazwę, współrzędne (np. 52.40, 16.92) albo pełny link z google.com/maps. Skróconych linków maps.app.goo.gl nie da się odczytać bez Workera (Ustawienia na liście wypraw).';
+async function expand(u){
+  try{const j=await api('/expand?u='+encodeURIComponent(u));return j.url||null}catch(e){return null}
+}
+async function tfetch(url,ms=8000){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
+  try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(t)}
+}
+async function geocode(q){
+  let failed=0;
+  try{const j=await tfetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=pl&name='+encodeURIComponent(q));
+    const r=j.results&&j.results[0];if(r)return{lat:r.latitude,lng:r.longitude,name:[r.name,r.admin1].filter(Boolean).join(', '),geo:1}}catch(e){failed++}
+  try{const j=await tfetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=pl&q='+encodeURIComponent(q));
+    if(j[0])return{lat:+j[0].lat,lng:+j[0].lon,name:j[0].display_name.split(',').slice(0,2).join(',').trim(),geo:1}}catch(e){failed++}
+  if(failed===2)throw new Error('network');
+  return null;
+}
 function nameFromUrl(u){try{const m=u.match(/\/maps\/place\/([^/@?]+)/);return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''}catch(e){return ''}}
 async function resolve(line){
   line=line.trim();let name='';
@@ -238,30 +257,34 @@ async function resolve(line){
     if(c2)return{...c2,name:name||nm||c2.lat.toFixed(4)+', '+c2.lng.toFixed(4)};
     if(!nm)return null;line=nm;
   }
-  try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(line));
-    const j=await r.json();
-    if(j[0])return{lat:+j[0].lat,lng:+j[0].lon,name:name||j[0].display_name.split(',').slice(0,2).join(',').trim(),geo:1}}catch(e){}
-  return null;
+  const g=await geocode(line);
+  return g?{...g,name:name||g.name}:null;
 }
 async function setPoint(k,sel){
-  const w=W(),v=$(sel).value.trim();if(!v)return;setMsg('Szukam…');
-  const r=await resolve(v);
-  if(!r){alert(FAIL);return}
+  const w=W(),v=$(sel).value.trim(),id=k==='start'?'#ms':'#md',msg=t=>{const m=$(id);if(m)m.textContent=t};
+  if(!v){msg('Wpisz miasto, link lub współrzędne.');return}
+  msg('Szukam…');
+  let r;try{r=await resolve(v)}catch(e){msg('Nie udało się połączyć z wyszukiwarką miejscowości. Sprawdź internet albo wpisz współrzędne.');return}
+  if(!r){msg(FAIL);return}
   w[k]=r;w.routed=false;save();render();
+  const m2=$(id);if(m2)m2.textContent='Ustawiono: '+r.name;
 }
 function setStartGPS(){
-  const w=W();if(!navigator.geolocation)return alert('Brak geolokalizacji.');
-  navigator.geolocation.getCurrentPosition(p=>{w.start={lat:p.coords.latitude,lng:p.coords.longitude,name:'Moja lokalizacja',gps:1};w.routed=false;save();render()},
-    e=>alert('Nie udało się pobrać lokalizacji: '+e.message),{enableHighAccuracy:true,timeout:10000});
+  const w=W(),say=t=>{const m=$('#ms');if(m)m.textContent=t};
+  if(!navigator.geolocation)return say('Ta przeglądarka nie obsługuje lokalizacji.');
+  say('Pobieram lokalizację…');
+  navigator.geolocation.getCurrentPosition(p=>{w.start={lat:p.coords.latitude,lng:p.coords.longitude,name:'Moja lokalizacja',gps:1};w.routed=false;save();render();say('Ustawiono: Moja lokalizacja')},
+    e=>say('Nie udało się pobrać lokalizacji: '+e.message+'. Wpisz miasto lub współrzędne.'),{enableHighAccuracy:true,timeout:10000});
 }
 async function addPlaces(){
-  const w=W(),lines=$('#paste').value.split('\n').map(x=>x.trim()).filter(Boolean);let ok=0,bad=0;
-  for(const l of lines){setMsg('Dodaję… ('+(ok+bad+1)+'/'+lines.length+')');
-    const r=await resolve(l);
+  const w=W(),lines=$('#paste').value.split('\n').map(x=>x.trim()).filter(Boolean);let ok=0,bad=0,net=0;
+  if(!lines.length)return setMsg('Wklej link, współrzędne lub nazwę miejscowości.');
+  for(const l of lines){setMsg('Dodaję… ('+(ok+bad+net+1)+'/'+lines.length+')');
+    let r=null;try{r=await resolve(l)}catch(e){net++;continue}
     if(r){w.locs.push({id:Date.now()+Math.random(),name:r.name,lat:r.lat,lng:r.lng,done:null});ok++}else bad++;
-    if(r&&r.geo)await sleep(1100)}
+    if(r&&r.geo)await sleep(300)}
   w.routed=false;save();render();
-  if(bad)setMsg('Nie rozpoznano: '+bad+'. '+FAIL);
+  setMsg((ok?'Dodano: '+ok+'. ':'')+(bad?'Nie rozpoznano: '+bad+'. '+FAIL:'')+(net?' Brak połączenia z wyszukiwarką dla '+net+' wpisów.':''));
 }
 const hav=(a,b)=>dist(a.lat,a.lng,b.lat,b.lng);
 async function orderRoute(w){
