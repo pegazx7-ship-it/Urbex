@@ -6,14 +6,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Urbex">
-<meta name="theme-color" content="#1c1917">
+<meta name="theme-color" content="#eef3f8">
+<script>try{var t=localStorage.getItem("urbex_theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Urbex</title>
 <style>
-:root{--bg:#f4f4f2;--card:#fff;--tx:#1c1c1a;--mut:#6b6b66;--ac:#c2410c;--bd:#e2e2dd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#131312;--card:#1e1e1c;--tx:#ececE8;--mut:#9a9a93;--ac:#fb923c;--bd:#33332f;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#131312;--card:#1e1e1c;--tx:#ececE8;--mut:#9a9a93;--ac:#fb923c;--bd:#33332f;color-scheme:dark}
+:root{--bg:#eef3f8;--card:#ffffff;--tx:#0b1f33;--mut:#5b6b7c;--ac:#0e7490;--on:#ffffff;--bd:#d6e1ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--bg:#0a1623;--card:#10243a;--tx:#e3edf7;--mut:#94a9bf;--ac:#22d3ee;--on:#04222b;--bd:#1f3b57;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a1623;--card:#10243a;--tx:#e3edf7;--mut:#94a9bf;--ac:#22d3ee;--on:#04222b;--bd:#1f3b57;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
 main{max-width:560px;margin:0 auto;padding:12px 14px calc(96px + env(safe-area-inset-bottom,0px))}
@@ -21,7 +22,7 @@ h1{font-size:30px;margin:8px 0 14px}h2{font-size:13px;margin:20px 0 8px;color:va
 .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:10px}
 input,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);margin:4px 0 10px}
 label{font-size:13px;color:var(--mut)}
-button,.btn{font:inherit;font-weight:600;border:0;border-radius:12px;min-height:48px;padding:12px 16px;background:var(--ac);color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+button,.btn{font:inherit;font-weight:600;border:0;border-radius:12px;min-height:48px;padding:12px 16px;background:var(--ac);color:var(--on);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 button.s,.btn.s{background:var(--bd);color:var(--tx)}button.w{width:100%}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 .bar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -40,9 +41,17 @@ iframe{width:100%;height:200px;border:0;border-radius:12px;background:var(--bd);
 .ok{border:2px solid var(--ac)}
 textarea{resize:vertical}
 details>summary{cursor:pointer;padding:10px 0;color:var(--mut)}
+.tb{max-width:560px;margin:0 auto;padding:10px 14px 0;display:flex;justify-content:flex-end;align-items:center;gap:8px;color:var(--mut);font-size:15px}
+@media(min-width:900px){.tb{max-width:780px}}
+.sw{position:relative;width:54px;height:32px;display:inline-block}
+.sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;padding:0;border:0;cursor:pointer;z-index:2}
+.sl{position:absolute;inset:0;background:var(--bd);border-radius:32px;transition:background .2s}
+.sl:before{content:"";position:absolute;width:26px;height:26px;left:3px;top:3px;background:var(--ac);border-radius:50%;transition:transform .2s}
+.sw input:checked+.sl:before{transform:translateX(22px)}
 </style>
 </head>
 <body>
+<div class="tb"><span aria-hidden="true">☀️</span><label class="sw" title="Tryb jasny / ciemny"><input type="checkbox" id="th" aria-label="Tryb ciemny"><span class="sl"></span></label><span aria-hidden="true">🌙</span></div>
 <main id="app"></main>
 <script>
 const $=s=>document.querySelector(s);
@@ -68,18 +77,24 @@ const photos=async id=>{db=db||await openDB();if(!db)return[];
   return new Promise(r=>{const q=st('readonly').getAll();q.onsuccess=()=>r(q.result.filter(p=>p.wid===id));q.onerror=()=>r([])})};
 
 /* ---------- widoki ---------- */
-function stats(w){
-  const l=+w.l,k=+w.km,p=+w.p;
-  return{cost:l&&p?l*p:null,l100:k&&l?l/k*100:null,ck:k&&l&&p?l*p/k:null};
+const num=v=>parseFloat(String(v==null?'':v).replace(',','.'))||0;
+const fuelOf=w=>{if(!w.fuel){w.fuel=[];if(num(w.l)&&num(w.km)&&num(w.p))w.fuel.push({id:Date.now(),km:w.km,l:w.l,p:w.p,t:Date.now()})}return w.fuel};
+function costs(w){
+  let km=0,l=0,fc=0;
+  fuelOf(w).forEach(x=>{km+=num(x.km);l+=num(x.l);fc+=num(x.l)*num(x.p)});
+  const lod=num(w.lodging&&w.lodging.price),oth=num(w.other),np=parseInt(w.people)||0,n=Math.max(1,np),total=fc+lod+oth;
+  return{km,l,fc,l100:km&&l?l/km*100:null,ck:km&&fc?fc/km:null,lod,oth,total,n,hasPeople:np>0,fpp:fc/n,tpp:total/n};
 }
+const fe=x=>{const l=num(x.l),k=num(x.km),p=num(x.p);return money(l*p)+' · '+(k&&l?(l/k*100).toFixed(2)+' l/100 km':'– l/100 km')+(k&&l*p?' · '+money(l*p/k)+'/km':'')};
+const lk=t=>{t=String(t||'').trim();return t?(/^https?:\/\//i.test(t)?t:'https://'+t):''};
 function render(){
   const w=W(),app=$('#app');
   if(!w){
     app.innerHTML=`<h1>Urbex</h1><button class="w" data-a="new">+ Nowa wyprawa</button><button class="s w" data-a="pull" style="margin-top:8px">⬇ Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:6px"></div><h2>Wyprawy</h2>`+
     ([...S.w].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
-      const s=stats(x),v=x.locs.filter(l=>l.done).length;
+      const s=costs(x),v=x.locs.filter(l=>l.done).length;
       return `<div class="card" data-a="open" data-id="${x.id}"><b>${esc(x.name)}</b> <span class="mut">${x.date}</span>
-      <div class="mut">${v}/${x.locs.length} miejsc · ${x.pc||0} zdjęć${s.cost!==null?' · '+money(s.cost):''}${s.l100!==null?' · '+s.l100.toFixed(1)+' l/100':''}</div></div>`}).join('')
+      <div class="mut">${v}/${x.locs.length} miejsc · ${x.pc||0} zdjęć${s.total>0?' · '+money(s.total)+(s.hasPeople?' ('+money(s.tpp)+'/os.)':''):''}${s.l100!==null?' · '+s.l100.toFixed(1)+' l/100':''}</div></div>`}).join('')
       ||'<div class="mut">Jeszcze nie masz żadnej wyprawy. Dotknij przycisku powyżej.</div>')+`<h2>Ustawienia</h2><div class="card"><label>Adres Workera (Cloudflare)</label><input id="wk" value="${esc(S.worker||'')}" placeholder="https://urbex.TWOJA-NAZWA.workers.dev" autocapitalize="off"><label>Hasło dostępu</label><input id="kk" type="password" value="${esc(S.key||'')}" autocomplete="off"><button class="s w" data-a="wk">Zapisz</button></div>`;
     return;
   }
@@ -178,27 +193,37 @@ function viewer(p,src){
   $('#rm').onclick=()=>{if(confirm('Usunąć to zdjęcie?')){st('readwrite').delete(p.id).onsuccess=()=>{const w=W();w.pc=Math.max(0,(w.pc||1)-1);save();o.remove();viewF(w)}}};
 }
 function viewK(w){
-  $('#body').innerHTML=`<h2>Dojazd i paliwo</h2><div class="card"><label>Auto</label><input id="car" value="${esc(w.car||'')}" placeholder="np. Golf 1.6 TDI">
-  <div class="row"><div><label>Przejechane km</label><input id="km" type="number" step="any" inputmode="decimal" value="${w.km||''}"></div>
-  <div><label>Zatankowane litry</label><input id="l" type="number" step="any" inputmode="decimal" value="${w.l||''}"></div></div>
-  <label>Cena paliwa (zł/l)</label><input id="p" type="number" step="any" inputmode="decimal" value="${w.p||''}"></div>
-  <div class="card"><div class="kv"><span>Koszt paliwa</span><span class="big" id="o1"></span></div>
-  <div class="kv"><span>Realne spalanie</span><span class="big" id="o2"></span></div>
-  <div class="kv"><span>Koszt na 1 km</span><b id="o3"></b></div></div>`;
+  const f=fuelOf(w),last=f.length?f[f.length-1].p:'',lo=w.lodging||{};
+  $('#body').innerHTML=`<h2>Auto i osoby</h2><div class="card"><label>Auto</label><input id="car" value="${esc(w.car||'')}" placeholder="np. Golf 1.6 TDI">
+   <label>Liczba osób w wyjeździe</label><input id="ppl" inputmode="numeric" value="${esc(w.people||'')}" placeholder="np. 3"></div>
+  <h2>Tankowania (${f.length})</h2>
+  ${f.map((x,i)=>`<div class="card"><b>Tankowanie ${i+1}</b>
+   <div class="row"><div><label>Km</label><input inputmode="decimal" data-fid="${x.id}" data-ff="km" value="${esc(x.km)}"></div>
+   <div><label>Litry</label><input inputmode="decimal" data-fid="${x.id}" data-ff="l" value="${esc(x.l)}"></div>
+   <div><label>Cena zł/l</label><input inputmode="decimal" data-fid="${x.id}" data-ff="p" value="${esc(x.p)}"></div></div>
+   <div class="mut" id="fe${x.id}">${fe(x)}</div>
+   <button class="s" style="min-height:40px;margin-top:8px" data-a="delfuel" data-id="${x.id}">Usuń</button></div>`).join('')}
+  <div class="card"><b>Dodaj tankowanie</b>
+   <div class="row"><div><label>Km od poprzedniego</label><input id="fk" inputmode="decimal"></div>
+   <div><label>Litry</label><input id="fl" inputmode="decimal"></div>
+   <div><label>Cena zł/l</label><input id="fp" inputmode="decimal" value="${esc(last)}"></div></div>
+   <button class="w" data-a="addfuel">+ Dodaj tankowanie</button><div id="fm" class="mut" style="margin-top:6px"></div></div>
+  <h2>Nocleg i inne koszty</h2><div class="card">
+   <label>Nocleg (nazwa)</label><input id="ln" value="${esc(lo.name||'')}" placeholder="np. Pensjonat pod Lasem">
+   <label>Cena noclegu (zł)</label><input id="lp" inputmode="decimal" value="${esc(lo.price||'')}">
+   <label>Link z Google Maps</label><input id="ll" value="${esc(lo.link||'')}" autocapitalize="off" placeholder="https://maps.app.goo.gl/…">
+   <a id="lnk" class="btn s w" href="${esc(lk(lo.link))}" target="_blank" rel="noopener" style="margin-bottom:10px" ${lk(lo.link)?'':'hidden'}>Otwórz nocleg w Google Maps ›</a>
+   <label>Inne koszty (parking, bilety), zł</label><input id="ot" inputmode="decimal" value="${esc(w.other||'')}"></div>
+  <h2>Podsumowanie</h2><div class="card" id="sum"></div>`;
   outK(w);
 }
-function outK(w){const s=stats(w);
-  $('#o1').textContent=s.cost!==null?money(s.cost):'–';
-  $('#o2').textContent=s.l100!==null?s.l100.toFixed(2)+' l/100 km':'–';
-  $('#o3').textContent=s.ck!==null?money(s.ck):'–';}
-
-
-/* ---------- plan trasy ---------- */
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const setMsg=t=>{const m=$('#msg');if(m)m.textContent=t};
-const FAIL='Nie rozpoznano. Wklej pełny link z google.com/maps, współrzędne (np. 52.40, 16.92) albo nazwę miejscowości. Skrócone linki maps.app.goo.gl wymagają włączenia rozwijania linków (ekran główny, sekcja Ustawienia). Alternatywa: w Google Maps przytrzymaj punkt na mapie i skopiuj współrzędne z góry ekranu.';
-async function expand(u){
-  try{const j=await api('/expand?u='+encodeURIComponent(u));return j.url||null}catch(e){return null}
+function outK(w){
+  const c=costs(w),el=$('#sum');if(!el)return;
+  const row=(a,b,big)=>`<div class="kv"><span>${a}</span>${big?`<span class="big">${b}</span>`:`<b>${b}</b>`}</div>`;
+  el.innerHTML=row('Przejechane',c.km?Math.round(c.km)+' km':'–')+row('Zatankowano',c.l?c.l.toFixed(1)+' l':'–')+row('Paliwo',c.fc?money(c.fc):'–')
+   +row('Średnie spalanie',c.l100!==null?c.l100.toFixed(2)+' l/100 km':'–')+row('Paliwo na 1 km',c.ck!==null?money(c.ck):'–')
+   +row('Nocleg',c.lod?money(c.lod):'–')+row('Inne koszty',c.oth?money(c.oth):'–')+row('Razem',money(c.total),1)
+   +row('Liczba osób',c.hasPeople?c.n:'wpisz liczbę osób powyżej')+row('Paliwo na osobę',money(c.fpp))+row('Całość na osobę',money(c.tpp),1);
 }
 function nameFromUrl(u){try{const m=u.match(/\/maps\/place\/([^/@?]+)/);return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''}catch(e){return ''}}
 async function resolve(line){
@@ -339,6 +364,14 @@ async function deleteTrip(w){
   S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render();
 }
 
+function setTheme(t,persist){
+  document.documentElement.setAttribute('data-theme',t);
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#0a1623':'#eef3f8';
+  if(persist)try{localStorage.setItem('urbex_theme',t)}catch(e){}
+}
+{const cur=document.documentElement.getAttribute('data-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+ $('#th').checked=cur==='dark';setTheme(cur,false)}
+
 /* ---------- zdarzenia ---------- */
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;
@@ -356,6 +389,12 @@ document.addEventListener('click',e=>{
     else l=w.locs.filter(x=>x.done).sort((p,q)=>q.done-p.done)[0];
     if(l){l.done=null;if(w.arrived&&w.arrived.id===l.id)w.arrived=null;save();render()}
   }
+  else if(a==='addfuel'){
+    const k=num($('#fk').value),l=num($('#fl').value),p=num($('#fp').value),m=$('#fm');
+    if(!(k>0&&l>0&&p>0)){m.textContent='Wpisz kilometry, litry i cenę (wszystkie większe od zera).';return}
+    fuelOf(w).push({id:Date.now(),km:$('#fk').value.trim(),l:$('#fl').value.trim(),p:$('#fp').value.trim(),t:Date.now()});save();viewK(w);
+  }
+  else if(a==='delfuel'){if(confirm('Usunąć to tankowanie?')){w.fuel=fuelOf(w).filter(x=>String(x.id)!==b.dataset.id);save();viewK(w)}}
   else if(a==='go'){w.arrived=null;save();setTimeout(render,400)}
   else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);w.routed=false;save();render()}
   else if(a==='delw')deleteTrip(w);
@@ -372,11 +411,17 @@ document.addEventListener('input',e=>{
   const w=W(),i=e.target.id;if(!w)return;
   if(e.target.dataset.lid){const l=w.locs.find(x=>String(x.id)===e.target.dataset.lid);if(l){l[e.target.dataset.f]=e.target.value;save()}return}
   if(i==='rad'){S.rad=+e.target.value||150;save();return}
-  if(['car','km','l','p'].includes(i)){w[i]=e.target.value;save();outK(w)}
+  if(e.target.dataset.fid){const x=fuelOf(w).find(y=>String(y.id)===e.target.dataset.fid);if(x){x[e.target.dataset.ff]=e.target.value;save();outK(w);const el=$('#fe'+x.id);if(el)el.textContent=fe(x)}}
+  else if(i==='car'){w.car=e.target.value;save()}
+  else if(i==='ppl'){w.people=e.target.value;save();outK(w)}
+  else if(i==='ln'||i==='lp'||i==='ll'){w.lodging=w.lodging||{};w.lodging[{ln:'name',lp:'price',ll:'link'}[i]]=e.target.value;save();outK(w);
+    if(i==='ll'){const a=$('#lnk'),u=lk(e.target.value);if(a){a.href=u||'#';a.hidden=!u}}}
+  else if(i==='ot'){w.other=e.target.value;save();outK(w)}
   else if(i==='wn'){w.name=e.target.value||'Urbex';save()}
   else if(i==='wd'&&e.target.value){w.date=e.target.value;save()}
 });
 document.addEventListener('change',async e=>{
+  if(e.target.id==='th'){setTheme(e.target.checked?'dark':'light',true);return}
   if(e.target.id==='o-t'){W().tolls=e.target.checked;W().routed=false;save();render();return}
   if(e.target.id==='o-h'){W().hw=e.target.checked;W().routed=false;save();render();return}
   if(e.target.id!=='pf')return;
@@ -398,6 +443,7 @@ document.addEventListener('visibilitychange',()=>{
 try{window.matchMedia('(min-width:900px)').addEventListener('change',render)}catch(e){}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+S.w.forEach(fuelOf);save();
 render();
 </script>
 </body>
