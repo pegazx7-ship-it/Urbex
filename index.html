@@ -40,6 +40,7 @@ button.s,.btn.s{background:var(--c2);color:var(--tx)}
 .bar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:6px;background:var(--bg);border-top:1px solid var(--bd);padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));z-index:5}
 .bar button{flex:1;max-width:170px;background:none;color:var(--mut);min-height:48px;font-size:14px;gap:6px;padding:0 10px}
 .bar button.on{background:var(--btn);color:var(--on)}
+.syn:empty{display:none}.syn{margin:-6px 0 8px;font-size:12px}
 .mapw{margin:0 -14px;background:var(--mapbg);padding-bottom:26px}
 .mapw svg{display:block;width:100%;height:auto;max-height:380px}
 .mapw.empty{padding:44px 24px 70px;text-align:center;color:#9DB8B3;font-weight:600}
@@ -91,7 +92,7 @@ const gm=l=>'https://www.google.com/maps/search/?api=1&query='+l.lat+','+l.lng;
 let S={w:[],cur:null,tab:'d'};
 const wide=()=>window.matchMedia&&window.matchMedia('(min-width:900px)').matches;
 try{Object.assign(S,JSON.parse(localStorage.getItem('urbex_v2')||'{}'))}catch(e){}
-const save=()=>{try{localStorage.setItem('urbex_v2',JSON.stringify(S))}catch(e){}};
+const save=()=>{try{S.w.forEach(stamp);localStorage.setItem('urbex_v2',JSON.stringify(S))}catch(e){}if(S.w.some(x=>x._dirty&&x.cid))scheduleSync()};
 const W=()=>S.w.find(x=>x.id===S.cur);
 let gpsMsg='Śledzenie wyłączone. Działa przy włączonym ekranie.',wid=null;
 
@@ -169,11 +170,11 @@ function mapSvg(w){
   const left=seq.filter(s=>s.k==='l'&&!s.done).length;
   return `<div class="mapw"><svg class="mp" viewBox="0 0 ${W0} ${H0}" role="img" aria-label="Schemat trasy, do odwiedzenia: ${left}">${cont}${segs}${dots}</svg><div id="pinfo" class="pinfo">Zielone: jeszcze nie byłeś. Szare: odwiedzone. Dotknij kropki, aby zobaczyć nazwę.</div></div>`;
 }
-const topBar=(w)=>`<div class="top"><button class="s" data-a="back">‹ Wyprawy</button><span class="tt">${esc(w.name)}</span><span class="sp"></span>${themeBtn()}</div>`;
+const topBar=(w)=>`<div class="top"><button class="s" data-a="back">‹ Wyprawy</button><span class="tt">${esc(w.name)}</span><span class="sp"></span>${themeBtn()}</div><div id="syn" class="mut syn">${esc(synTxt)}</div>`;
 function render(){
-  const w=W(),app=$('#app');
+  pend=0;const w=W(),app=$('#app');
   if(!w){
-    app.innerHTML=`<div class="top"><h1>Urbex</h1><span class="sp"></span>${themeBtn()}</div><button class="w" data-a="new">+ Nowa wyprawa</button><button class="s w" data-a="pull" style="margin-top:8px">Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:6px"></div><h2>Wyprawy</h2>`+
+    app.innerHTML=`<div class="top"><h1>Urbex</h1><span class="sp"></span>${themeBtn()}</div><button class="w" data-a="new">+ Nowa wyprawa</button><button class="s w" data-a="pull" style="margin-top:8px">Odśwież listę z chmury</button><div id="sy" class="mut" style="margin-top:6px">${esc(synTxt)}</div>${cloudList.length?`<h2>W chmurze (nie pobrane)</h2>`+cloudList.map(t=>`<div class="card"><b>${esc(t.name||'Wyprawa')}</b> <span class="mut">${esc(t.date||'')}</span><button class="w" style="margin-top:10px" data-a="dlc" data-id="${esc(t.id)}">Pobierz na to urządzenie</button></div>`).join(''):''}<h2>Wyprawy</h2>`+
     ([...S.w].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
       const s=costs(x),v=x.locs.filter(l=>l.done).length;
       return `<div class="card" data-a="open" data-id="${x.id}"><b>${esc(x.name)}</b> <span class="mut">${x.date}</span>
@@ -229,7 +230,7 @@ function viewPlan(w){
    <button class="w" data-a="rt">Ułóż kolejność miejsc</button>
    ${w.routed?`<div class="mut" style="margin:10px 0">Kolejność ułożona od startu do celu. Szacunkowo ok. ${w.est} km. Podgląd całej trasy:</div>
    ${lg.map((x,i)=>`<a class="btn s w" style="margin-top:8px" href="${x.u}" target="_blank" rel="noopener">Zobacz trasę w Google Maps · część ${i+1} (${x.n} pkt) ›</a>`).join('')}`:''}</div>`:''}
-  <h2>5 · Wyślij na telefon</h2><div class="card"><button class="w" data-a="push">Wyślij trasę do chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
+  <h2>5 · Udostępnij i synchronizuj</h2><div class="card"><button class="w" data-a="push">${w.cid?'Synchronizuj teraz':'Wyślij wyprawę do chmury'}</button><div class="mut" style="margin-top:8px">Zmiany z każdego urządzenia zapisują się same i trafiają do pozostałych w ciągu kilkunastu sekund.</div><div id="sy" class="mut" style="margin-top:8px">${esc(synTxt)}</div></div>
   <h2>Wyprawa</h2><div class="card"><div class="row"><div><label>Nazwa</label><input id="wn" value="${esc(w.name)}"></div><div><label>Data</label><input id="wd" type="date" value="${w.date}"></div></div>
    <button class="s w" data-a="delw">Usuń całą wyprawę</button></div>`;
   $('#body').innerHTML=`<div class="cols"><div>${left}</div><div>${right}</div></div>`;
@@ -261,7 +262,7 @@ function viewDrive(w){
   ${rest.length?`<h2>Dalej (${rest.length})</h2><div class="chips">${rest.map((l,i)=>`<button class="chip" data-a="pin" data-id="${l.id}">${lab(done.length+i+2,l.name,18)||(done.length+i+2)}</button>`).join('')}</div>
   <details><summary>Edytuj opisy kolejnych miejsc</summary>${rest.map((l,i)=>`<div class="card"><b>${done.length+i+2}.</b>${fields(l)}<div class="row">${mapLinks(l)}</div></div>`).join('')}</details>`:''}
   <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(short(l.name,60))}</b><div class="mut">${fmt(l.done)}</div>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}<button class="s" style="margin-top:8px;min-height:40px" data-a="undoid" data-id="${l.id}">↩ Cofnij</button></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
-  <h2>Chmura</h2><div class="card"><button class="s w" data-a="pull">Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
+  <h2>Chmura</h2><div class="card"><button class="s w" data-a="push">${w.cid?'Synchronizuj teraz':'Udostępnij wyprawę w chmurze'}</button><div id="sy" class="mut" style="margin-top:8px">${esc(synTxt)}</div></div>
   <details><summary>Więcej opcji</summary><div class="card"><label>Promień wykrycia dojazdu (m)</label><input id="rad" type="number" inputmode="numeric" value="${S.rad||150}">
    <label>Dodaj miejsce (link, współrzędne lub nazwa)</label><textarea id="paste" rows="2"></textarea><button class="s w" data-a="add">+ Dodaj</button><div id="msg" class="mut" style="margin-top:6px"></div></div>
   <div class="card"><button class="s w" data-a="delw">Usuń tę wyprawę z telefonu</button><div class="mut" style="margin-top:6px">Usuwa też zdjęcia tej wyprawy zapisane w telefonie.</div></div></details></div>`;
@@ -408,8 +409,98 @@ function legs(w){
 }
 
 
-/* ---------- synchronizacja (Cloudflare Worker) ---------- */
-const syncMsg=t=>{const m=$('#sy');if(m)m.textContent=t};
+/* ---------- synchronizacja (Cloudflare Worker, wspólne wyprawy) ---------- */
+/* --- wspólna logika łączenia zmian (ta sama w Workerze i w aplikacji) --- */
+const canon=v=>JSON.stringify(v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(y=>[y,x[y]])):x);
+function mergeEnt(a,b){
+  a=a||{};b=b||{};
+  const d=Math.max(a.d||0,b.d||0);
+  if(d)return{d};
+  const o={f:{},t:{}},ta=a.t||{},tb=b.t||{},fa=a.f||{},fb=b.f||{};
+  for(const k of new Set([...Object.keys(ta),...Object.keys(tb)])){
+    const x=ta[k]||0,y=tb[k]||0;
+    const pickB=y>x||(y===x&&canon(fb[k])>canon(fa[k]));
+    o.f[k]=pickB?fb[k]:fa[k];o.t[k]=pickB?y:x;
+  }
+  return o;
+}
+function mergeMap(a,b){
+  a=a||{};b=b||{};const o={};
+  for(const k of new Set([...Object.keys(a),...Object.keys(b)]))o[k]=mergeEnt(a[k],b[k]);
+  return o;
+}
+function mergeDoc(a,b){
+  a=a||{};b=b||{};
+  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel)};
+  const del=Math.max(a.deleted||0,b.deleted||0);if(del)o.deleted=del;
+  return o;
+}
+const stripU=d=>{const o={...d};delete o.updated;return o};
+/* --- koniec wspólnej logiki --- */
+
+const META=['name','date','start','dest','car','people','lodN','lodP','lodL','other','tolls','hw'];
+const LOCF=['name','lat','lng','note','done','ord'];
+const FUELF=['km','l','p','t'];
+const nv=v=>v===undefined?null:v;
+const J=JSON.stringify;
+let syncing=0,pend=0,syncT=null,cloudList=[],synTxt='';
+function fixOrd(w){let prev=0,bad=false;w.locs.forEach(l=>{if(bad||l.ord==null||!(l.ord>prev)){bad=true;l.ord=prev+1000}prev=l.ord})}
+function norm(w,noFix){
+  if(!noFix)fixOrd(w);
+  const lo=w.lodging||{};
+  const m={name:nv(w.name),date:nv(w.date),start:nv(w.start),dest:nv(w.dest),car:nv(w.car),people:nv(w.people),lodN:nv(lo.name),lodP:nv(lo.price),lodL:nv(lo.link),other:nv(w.other),tolls:w.tolls!==false,hw:!!w.hw};
+  const L={},F={};
+  w.locs.forEach(l=>{L[l.id]={name:nv(l.name),lat:nv(l.lat),lng:nv(l.lng),note:nv(l.note),done:l.done||null,ord:nv(l.ord)}});
+  fuelOf(w).forEach(x=>{F[x.id]={km:nv(x.km),l:nv(x.l),p:nv(x.p),t:nv(x.t)}});
+  return{m,L,F};
+}
+function stamp(w){
+  const n=norm(w),now=Date.now(),t=w._t=w._t||{m:{},l:{},f:{},dl:{},df:{}},v=w._v||{m:{},L:{},F:{}};let ch=false;
+  META.forEach(f=>{if(J(n.m[f])!==J(v.m[f])){t.m[f]=now;ch=true}});
+  for(const [kind,fl,tk,dk] of [['L',LOCF,'l','dl'],['F',FUELF,'f','df']]){
+    const old=v[kind]||{};
+    for(const id in n[kind]){const o=n[kind][id],p=old[id];
+      for(const f of fl)if(!p||J(o[f])!==J(p[f])){(t[tk][id]=t[tk][id]||{})[f]=now;ch=true}}
+    for(const id in old)if(!n[kind][id]&&!t[dk][id]){t[dk][id]=now;ch=true}
+  }
+  w._v=n;if(ch){w._dirty=1;w._dv=(w._dv||0)+1}
+}
+function docOf(w){
+  stamp(w);const n=w._v,t=w._t,d={id:w.cid,v:2,meta:{f:{...n.m},t:{...t.m}},locs:{},fuel:{}};
+  for(const id in n.L)d.locs[id]={f:{...n.L[id]},t:{...(t.l[id]||{})}};
+  for(const id in t.dl)d.locs[id]={d:t.dl[id]};
+  for(const id in n.F)d.fuel[id]={f:{...n.F[id]},t:{...(t.f[id]||{})}};
+  for(const id in t.df)d.fuel[id]={d:t.df[id]};
+  if(w.delAt)d.deleted=w.delAt;
+  return d;
+}
+function setM(w,f,v){
+  if(f==='lodN'||f==='lodP'||f==='lodL'){w.lodging=w.lodging||{};w.lodging[{lodN:'name',lodP:'price',lodL:'link'}[f]]=v==null?'':v}
+  else if(f==='tolls')w.tolls=v!==false;
+  else if(f==='hw')w.hw=!!v;
+  else if(v==null&&(f==='name'||f==='date'))return;
+  else w[f]=(v==null&&(f==='car'||f==='people'||f==='other'))?'':v;
+}
+function applyDoc(w,r){
+  stamp(w);
+  const before=canon(w._v),merged=mergeDoc(docOf(w),r),M=merged.meta,t=w._t={m:{...M.t},l:{},f:{},dl:{},df:{}};
+  META.forEach(f=>{if(M.f&&f in M.f)setM(w,f,M.f[f])});
+  const lm=new Map(w.locs.map(l=>[String(l.id),l])),lo=[];
+  for(const k in merged.locs){const e=merged.locs[k];
+    if(e.d){t.dl[k]=e.d;continue}
+    const l=lm.get(k)||{id:Number(k)};LOCF.forEach(f=>{if(f in e.f)l[f]=e.f[f]});t.l[k]={...e.t};lo.push(l)}
+  lo.sort((a,b)=>(a.ord-b.ord)||(a.id-b.id));w.locs=lo;
+  const fm=new Map(fuelOf(w).map(x=>[String(x.id),x])),fo=[];
+  for(const k in merged.fuel){const e=merged.fuel[k];
+    if(e.d){t.df[k]=e.d;continue}
+    const x=fm.get(k)||{id:Number(k)};FUELF.forEach(f=>{if(f in e.f)x[f]=e.f[f]});t.f[k]={...e.t};fo.push(x)}
+  fo.sort((a,b)=>a.id-b.id);w.fuel=fo;
+  w._v=norm(w,true);
+  return{changed:before!==canon(w._v),push:canon(stripU(merged))!==canon(stripU(r))};
+}
+const hhmm=()=>new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+function setSyn(t){synTxt=t;['#syn','#sy'].forEach(q=>{const e=$(q);if(e)e.textContent=t})}
+const syncMsg=setSyn;
 async function api(path,opt){
   if(!S.worker||!S.key)throw new Error('Uzupełnij adres Workera i hasło w Ustawieniach (ekran główny, na dole).');
   const r=await fetch((/^https?:\/\//i.test(S.worker)?S.worker:'https://'+S.worker).replace(/\/+$/,'')+path,Object.assign({},opt,{headers:{'X-Key':S.key,'Content-Type':'application/json'}}));
@@ -417,32 +508,43 @@ async function api(path,opt){
   if(!r.ok)throw new Error('Błąd Workera ('+r.status+').');
   return r.json();
 }
-async function push(w){
-  syncMsg('Wysyłam…');
-  try{
-    w.cid=w.cid||String(w.id);
-    await api('/trip',{method:'PUT',body:JSON.stringify({id:w.cid,name:w.name,date:w.date,start:w.start||null,dest:w.dest||null,locs:w.locs})});
-    w.cloud=1;save();syncMsg('Wysłano o '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})+' ('+w.locs.length+' miejsc).');
-  }catch(e){syncMsg(e.message)}
+function scheduleSync(){clearTimeout(syncT);syncT=setTimeout(()=>{const w=W();if(w)syncTrip(w)},3000)}
+function renderKeep(){
+  const keep={};['fk','fl','fp','paste','si','di'].forEach(i=>{const e=document.getElementById(i);if(e&&e.value)keep[i]=e.value});
+  render();for(const i in keep){const e=document.getElementById(i);if(e)e.value=keep[i]}
 }
-async function pull(){
-  syncMsg('Pobieram…');
+function softRender(){const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)){pend=1;return}renderKeep()}
+async function syncTrip(w,loud){
+  if(!w||!w.cid||!S.worker||!S.key){if(loud)setSyn('Uzupełnij adres Workera i hasło w Ustawieniach (ekran główny, na dole).');return}
+  if(syncing)return;syncing=1;
   try{
-    const t=await api('/trip');if(!t)return syncMsg('W chmurze nie ma jeszcze trasy.');
-    if(t.deleted){
-      const lw=S.w.find(x=>x.cid===t.id);
-      if(!lw)return syncMsg('W chmurze nie ma aktywnej trasy.');
-      if(lw.pc>0)return syncMsg('Trasa „'+lw.name+'” została usunięta na komputerze, ale ma '+lw.pc+' zdjęć na tym telefonie, więc jej nie kasuję. Usuń ją ręcznie (Więcej opcji), gdy zdjęcia będą bezpieczne.');
-      S.w=S.w.filter(x=>x!==lw);if(S.cur===lw.id)S.cur=null;save();render();
-      return syncMsg('Trasa „'+lw.name+'” została usunięta na komputerze, więc usunięto ją też z telefonu.');
+    for(let round=0;round<3;round++){
+      stamp(w);const ver=w._dv||0;let r;
+      if(w._pull){r=await api('/sync/'+w.cid)}
+      else if(w._dirty||!w.srv){r=await api('/sync/'+w.cid,{method:'POST',body:JSON.stringify(docOf(w))})}
+      else{r=await api('/sync/'+w.cid+'?since='+w.srv);if(r.same){setSyn('Zsynchronizowano '+hhmm());break}}
+      if(r.none){w._pull=0;w._dirty=1;continue}
+      if(r.deleted){remoteDeleted(w);return}
+      const wasPull=w._pull;w._pull=0;
+      const res=applyDoc(w,r);w.srv=r.updated;
+      if(!wasPull&&(w._dv||0)===ver)w._dirty=0;
+      if(res.push)w._dirty=1;
+      if(res.changed&&S.cur===w.id)softRender();
+      if(!w._dirty){setSyn('Zsynchronizowano '+hhmm());break}
     }
-    let w=S.w.find(x=>x.cid===t.id);
-    if(!w){w={id:Date.now(),cid:t.id,locs:[],pc:0};S.w.push(w)}
-    const dn=new Map(w.locs.filter(l=>l.done).map(l=>[l.id,l.done]));
-    Object.assign(w,{name:t.name,date:t.date,start:t.start,dest:t.dest,cloud:1,routed:false});
-    w.locs=(t.locs||[]).map(l=>Object.assign({},l,{done:l.done||dn.get(l.id)||null}));
-    S.cur=w.id;S.tab='d';save();render();
-  }catch(e){syncMsg(e.message)}
+    save();
+  }catch(e){setSyn((navigator.onLine===false?'Brak internetu. ':'')+'Zmiany czekają w telefonie. '+e.message)}
+  finally{syncing=0}
+}
+function remoteDeleted(w){
+  if(w.pc>0){setSyn('Wyprawa „'+w.name+'” została usunięta w chmurze, ale ma '+w.pc+' zdjęć na tym telefonie, więc jej nie kasuję. Usuń ją ręcznie (Więcej opcji), gdy zdjęcia będą bezpieczne.');w.cid=null;save();return}
+  S.w=S.w.filter(x=>x!==w);if(S.cur===w.id)S.cur=null;save();render();
+  setSyn('Wyprawa „'+w.name+'” została usunięta w chmurze, więc usunięto ją też z tego urządzenia.');
+}
+async function listCloud(){
+  setSyn('Pobieram listę wypraw…');
+  try{const r=await api('/trips');cloudList=r.filter(t=>!S.w.some(x=>x.cid===t.id));render();setSyn(cloudList.length?'':'Nie ma nowych wypraw w chmurze.')}
+  catch(e){setSyn(e.message)}
 }
 
 /* ---------- lokalizacje ---------- */
@@ -465,10 +567,10 @@ async function delPhotos(id){
 async function deleteTrip(w){
   const phone=!wide();
   if(!confirm(phone?'Usunąć tę wyprawę z telefonu razem ze zdjęciami?':'Usunąć tę wyprawę z tego urządzenia?'))return;
-  if(!phone&&w.cid&&S.worker&&S.key&&confirm('Usunąć też z chmury? Telefon usunie ją przy najbliższym dotknięciu „Pobierz”.')){
+  if(!phone&&w.cid&&S.worker&&S.key&&confirm('Usunąć też z chmury? Pozostałe urządzenia usuną ją przy najbliższej synchronizacji.')){
     try{
-      const t=await api('/trip');
-      if(t&&t.id===w.cid&&!t.deleted)await api('/trip',{method:'PUT',body:JSON.stringify({id:w.cid,deleted:true,name:w.name,locs:[]})});
+      stamp(w);const d=docOf(w);d.deleted=Date.now();
+      await api('/sync/'+w.cid,{method:'POST',body:JSON.stringify(d)});
     }catch(e){alert('Nie udało się usunąć z chmury: '+e.message+' Wyprawa zostanie usunięta tylko tutaj.')}
   }
   if(phone)await delPhotos(w.id);
@@ -490,8 +592,8 @@ document.addEventListener('click',e=>{
   const a=b.dataset.a,w=W();
   if(a==='new'){const n=prompt('Nazwa wyprawy','Urbex');if(n===null)return;
     const x={id:Date.now(),name:n.trim()||'Urbex',date:today(),locs:[],pc:0};S.w.push(x);S.cur=x.id;S.tab='d';save();render()}
-  else if(a==='open'){S.cur=+b.dataset.id;S.tab='d';save();render()}
-  else if(a==='back'){stopTrack();S.cur=null;save();render()}
+  else if(a==='open'){S.cur=+b.dataset.id;S.tab='d';save();render();const ow=W();if(ow&&ow.cid)syncTrip(ow)}
+  else if(a==='back'){stopTrack();if(w&&w.cid)syncTrip(w);S.cur=null;save();render()}
   else if(a==='tab'){S.tab=b.dataset.t;render()}
   else if(a==='theme')setTheme(curTheme()==='dark'?'light':'dark',true);
   else if(a==='pin'){const el=$('#pinfo');if(!el||!w)return;const id=b.getAttribute('data-id');let t;
@@ -516,8 +618,13 @@ document.addEventListener('click',e=>{
   else if(a==='go'){w.arrived=null;save();setTimeout(render,400)}
   else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);w.routed=false;save();render()}
   else if(a==='delw')deleteTrip(w);
-  else if(a==='push')push(w);
-  else if(a==='pull')pull();
+  else if(a==='push'){if(!S.worker||!S.key){setSyn('Uzupełnij adres Workera i hasło w Ustawieniach (ekran główny, na dole).');return}
+    if(!w.cid)w.cid=String(Date.now());w._dirty=1;save();syncTrip(w,true)}
+  else if(a==='pull')listCloud();
+  else if(a==='dlc'){const id=b.dataset.id,t=cloudList.find(x=>x.id===id);
+    const nw={id:Date.now(),cid:id,name:(t&&t.name)||'Urbex',date:(t&&t.date)||today(),locs:[],pc:0};
+    nw._t={m:{},l:{},f:{},dl:{},df:{}};nw._v=norm(nw,true);nw._pull=1;
+    S.w.push(nw);S.cur=nw.id;S.tab='d';cloudList=cloudList.filter(x=>x.id!==id);save();render();syncTrip(nw,true)}
   else if(a==='wk'){let wk=$('#wk').value.trim().replace(/\/+$/,'');if(wk&&!/^https?:\/\//i.test(wk))wk='https://'+wk;S.worker=wk;S.key=$('#kk').value;save();alert('Zapisano')}
   else if(a==='add')addPlaces();
   else if(a==='sg')setStartGPS();
@@ -558,6 +665,9 @@ document.addEventListener('visibilitychange',()=>{
   },()=>{},{enableHighAccuracy:true,timeout:8000,maximumAge:30000});
 });
 try{window.matchMedia('(min-width:900px)').addEventListener('change',render)}catch(e){}
+document.addEventListener('focusout',()=>{if(pend){setTimeout(()=>{if(pend&&!(document.activeElement&&/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)))renderKeep()},700)}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const w=W();if(w&&w.cid)syncTrip(w)}});
+setInterval(()=>{if(document.visibilityState==='visible'){const w=W();if(w&&w.cid)syncTrip(w)}},15000);
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 S.w.forEach(fuelOf);save();
