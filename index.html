@@ -4,202 +4,192 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Urbex">
+<meta name="theme-color" content="#1c1917">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Urbex</title>
 <style>
-:root{--bg:#f4f4f2;--card:#fff;--tx:#1c1c1a;--mut:#6b6b66;--ac:#c2410c;--ok:#15803d;--bd:#e2e2dd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#131312;--card:#1e1e1c;--tx:#ececE8;--mut:#9a9a93;--ac:#fb923c;--ok:#4ade80;--bd:#33332f;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#131312;--card:#1e1e1c;--tx:#ececE8;--mut:#9a9a93;--ac:#fb923c;--ok:#4ade80;--bd:#33332f;color-scheme:dark}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
-main{max-width:560px;margin:0 auto;padding:12px 14px 90px}
-h2{font-size:15px;margin:18px 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
-input,textarea,select{width:100%;font:inherit;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);margin:4px 0 8px}
+:root{--bg:#f4f4f2;--card:#fff;--tx:#1c1c1a;--mut:#6b6b66;--ac:#c2410c;--bd:#e2e2dd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#131312;--card:#1e1e1c;--tx:#ececE8;--mut:#9a9a93;--ac:#fb923c;--bd:#33332f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#131312;--card:#1e1e1c;--tx:#ececE8;--mut:#9a9a93;--ac:#fb923c;--bd:#33332f;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:12px 14px calc(96px + env(safe-area-inset-bottom,0px))}
+h1{font-size:30px;margin:8px 0 14px}h2{font-size:13px;margin:20px 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:10px}
+input,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);margin:4px 0 10px}
 label{font-size:13px;color:var(--mut)}
-button,.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 14px;background:var(--ac);color:#fff;text-decoration:none;display:inline-block;cursor:pointer}
-button.s,.btn.s{background:var(--bd);color:var(--tx)}
-.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav button{flex:1;background:none;color:var(--mut);border-radius:0;padding:14px 4px;font-size:14px}
-nav button.on{color:var(--ac)}
-.tab{display:none}.tab.on{display:block}
-.big{font-size:26px;font-weight:700}.mut{color:var(--mut);font-size:13px}
-.now{border:2px solid var(--ac)}.done{opacity:.75}
+button,.btn{font:inherit;font-weight:600;border:0;border-radius:12px;min-height:48px;padding:12px 16px;background:var(--ac);color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+button.s,.btn.s{background:var(--bd);color:var(--tx)}button.w{width:100%}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.bar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar button{flex:1;background:none;color:var(--mut);border-radius:0;min-height:58px;font-size:13px;flex-direction:column;gap:2px}
+.bar button.on{color:var(--ac)}.bar span{font-size:22px}
+.top{display:flex;align-items:center;gap:10px;margin:4px 0 12px}.top button{min-height:40px;padding:6px 12px}
+.big{font-size:26px;font-weight:700}.mut{color:var(--mut);font-size:14px}.now{border:2px solid var(--ac)}.done{opacity:.7}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
-iframe{width:100%;height:220px;border:0;border-radius:10px;background:var(--bd)}
-.kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)}
+iframe{width:100%;height:200px;border:0;border-radius:12px;background:var(--bd);margin:8px 0}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--bd)}
+.ov{position:fixed;inset:0;background:#000e;display:flex;flex-direction:column;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));z-index:9}
+.ov img{flex:1;min-height:0;object-fit:contain;width:100%}
 </style>
 </head>
 <body>
-<main>
-<section id="t1" class="tab on">
-  <h2>Aktualny cel</h2>
-  <div id="cur" class="card now"></div>
-  <div class="card">
-    <div class="row"><button id="track">▶ Włącz śledzenie</button><div style="flex:.6"><label>Promień (m)</label><input id="rad" type="number" value="150" inputmode="numeric"></div></div>
-    <div id="gps" class="mut">Śledzenie wyłączone. Działa tylko przy włączonym ekranie i otwartej stronie.</div>
-  </div>
-  <h2>Dodaj lokalizacje</h2>
-  <div class="card">
-    <label>Jedna lokalizacja na linię: link Google Maps lub współrzędne (opcjonalnie „Nazwa | link”)</label>
-    <textarea id="paste" rows="4" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z&#10;52.4064, 16.9252"></textarea>
-    <button id="add">Dodaj do listy</button> <span id="addmsg" class="mut"></span>
-  </div>
-  <h2>Do odwiedzenia</h2><div id="todo"></div>
-  <h2>Archiwum</h2><div id="arch"></div>
-</section>
-
-<section id="t2" class="tab">
-  <h2>Podróż</h2>
-  <div class="card">
-    <label>Auto</label><input id="car" placeholder="np. Golf 1.6 TDI">
-    <div class="row"><div><label>Przejechane km</label><input id="km" type="number" step="any" inputmode="decimal"></div>
-    <div><label>Zatankowane litry</label><input id="lit" type="number" step="any" inputmode="decimal"></div></div>
-    <label>Cena paliwa (zł/l)</label><input id="pr" type="number" step="any" inputmode="decimal">
-  </div>
-  <div class="card">
-    <div class="kv"><span>Koszt paliwa</span><span class="big" id="o1">–</span></div>
-    <div class="kv"><span>Realne spalanie</span><span class="big" id="o2">–</span></div>
-    <div class="kv"><span>Koszt na 1 km</span><b id="o3">–</b></div>
-    <br><button id="savetrip">Zapisz podróż</button>
-  </div>
-  <h2>Zapisane podróże</h2><div id="trips"></div>
-</section>
-
-<section id="t3" class="tab">
-  <h2>Zdjęcia</h2>
-  <div class="card">
-    <label>Data urbexu (folder)</label><input id="pdate" type="date">
-    <input id="pfile" type="file" accept="image/*" multiple>
-    <div class="mut">Zdjęcia zapisują się lokalnie w tej przeglądarce (nie na Dysku Google) i są grupowane w foldery według daty.</div>
-  </div>
-  <div id="photos"></div>
-</section>
-</main>
-<nav><button data-t="t1" class="on">📍 Trasa</button><button data-t="t2">⛽ Podróż</button><button data-t="t3">📷 Zdjęcia</button></nav>
-
+<main id="app"></main>
 <script>
 const $=s=>document.querySelector(s);
-let S={locs:[],trips:[]};
-try{const r=localStorage.getItem('urbex_v1');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
-const save=()=>{try{localStorage.setItem('urbex_v1',JSON.stringify(S))}catch(e){}};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const fmt=t=>new Date(t).toLocaleString('pl-PL',{dateStyle:'short',timeStyle:'short'});
+const money=v=>v.toLocaleString('pl-PL',{style:'currency',currency:'PLN'});
 const gm=l=>'https://www.google.com/maps/search/?api=1&query='+l.lat+','+l.lng;
-const fmt=ts=>new Date(ts).toLocaleString('pl-PL',{dateStyle:'short',timeStyle:'short'});
+let S={w:[],cur:null,tab:'m'};
+try{Object.assign(S,JSON.parse(localStorage.getItem('urbex_v2')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('urbex_v2',JSON.stringify(S))}catch(e){}};
+const W=()=>S.w.find(x=>x.id===S.cur);
+let gpsMsg='Śledzenie wyłączone. Działa przy włączonym ekranie.',wid=null;
 
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');$('#'+b.dataset.t).classList.add('on');
-  if(b.dataset.t==='t3')renderPhotos();
+/* ---------- IndexedDB (zdjęcia) ---------- */
+let db=null;
+const openDB=()=>new Promise(res=>{try{const r=indexedDB.open('urbex_v2',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id',autoIncrement:true});
+  r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}});
+const st=m=>db.transaction('p',m).objectStore('p');
+const photos=async id=>{db=db||await openDB();if(!db)return[];
+  return new Promise(r=>{const q=st('readonly').getAll();q.onsuccess=()=>r(q.result.filter(p=>p.wid===id));q.onerror=()=>r([])})};
+
+/* ---------- widoki ---------- */
+function stats(w){
+  const l=+w.l,k=+w.km,p=+w.p;
+  return{cost:l&&p?l*p:null,l100:k&&l?l/k*100:null,ck:k&&l&&p?l*p/k:null};
+}
+function render(){
+  const w=W(),app=$('#app');
+  if(!w){
+    app.innerHTML=`<h1>Urbex</h1><button class="w" data-a="new">+ Nowa wyprawa</button><h2>Wyprawy</h2>`+
+    ([...S.w].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
+      const s=stats(x),v=x.locs.filter(l=>l.done).length;
+      return `<div class="card" data-a="open" data-id="${x.id}"><b>${esc(x.name)}</b> <span class="mut">${x.date}</span>
+      <div class="mut">${v}/${x.locs.length} miejsc · ${x.pc||0} zdjęć${s.cost!==null?' · '+money(s.cost):''}${s.l100!==null?' · '+s.l100.toFixed(1)+' l/100':''}</div></div>`}).join('')
+      ||'<div class="mut">Jeszcze nie masz żadnej wyprawy. Dotknij przycisku powyżej.</div>');
+    return;
+  }
+  const tabs=[['m','📍','Miejsca'],['f','📷','Zdjęcia'],['k','⛽','Koszt']];
+  app.innerHTML=`<div class="top"><button class="s" data-a="back">‹ Wyprawy</button><b>${esc(w.name)}</b></div><div id="body"></div>
+  <div class="bar">${tabs.map(t=>`<button data-a="tab" data-t="${t[0]}" class="${S.tab===t[0]?'on':''}"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div>`;
+  ({m:viewM,f:viewF,k:viewK})[S.tab](w);
+}
+function viewM(w){
+  const c=w.locs.find(l=>!l.done),todo=w.locs.filter(l=>!l.done),done=w.locs.filter(l=>l.done).sort((a,b)=>b.done-a.done);
+  $('#body').innerHTML=`<h2>Następny cel</h2>
+  <div class="card now">${c?`<div class="big">${esc(c.name)}</div><div class="mut">${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
+   <iframe loading="lazy" src="https://maps.google.com/maps?q=${c.lat},${c.lng}&z=15&output=embed"></iframe>
+   <div class="row"><a class="btn" href="${gm(c)}" target="_blank" rel="noopener">Google Maps</a><button class="s" data-a="mark">Dotarłem</button></div>`
+   :'<div class="mut">Brak miejsc do odwiedzenia. Dodaj je poniżej.</div>'}</div>
+  <div class="card"><button class="w" data-a="track">${wid!==null?'■ Zatrzymaj śledzenie':'▶ Włącz śledzenie GPS'}</button>
+   <div id="gps" class="mut" style="margin-top:8px">${esc(gpsMsg)}</div>
+   <label>Promień wykrycia (m)</label><input id="rad" type="number" inputmode="numeric" value="${S.rad||150}"></div>
+  <h2>Dodaj miejsca</h2><div class="card">
+   <label>Jedno miejsce na linię: link Google Maps lub współrzędne. Opcjonalnie „Nazwa | link”.</label>
+   <textarea id="paste" rows="4" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z"></textarea>
+   <button class="w" data-a="add">Dodaj do listy</button><div id="addmsg" class="mut" style="margin-top:6px"></div></div>
+  <h2>Do odwiedzenia (${todo.length})</h2>${todo.map((l,i)=>`<div class="card"><b>${i+1}. ${esc(l.name)}</b><div class="mut">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}</div>
+   <div class="row" style="margin-top:8px"><a class="btn s" href="${gm(l)}" target="_blank" rel="noopener">Mapa</a><button class="s" data-a="dl" data-id="${l.id}">Usuń</button></div></div>`).join('')||'<div class="mut">Pusto.</div>'}
+  <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(l.name)}</b><div class="mut">${fmt(l.done)}</div></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
+  <h2>Wyprawa</h2><div class="card"><div class="row"><div><label>Nazwa</label><input id="wn" value="${esc(w.name)}"></div><div><label>Data</label><input id="wd" type="date" value="${w.date}"></div></div>
+   <button class="s w" data-a="delw">Usuń całą wyprawę</button></div>`;
+}
+async function viewF(w){
+  $('#body').innerHTML=`<h2>Zdjęcia — ${w.date}</h2><label class="btn w" style="display:flex">📷 Dodaj zdjęcia<input id="pf" type="file" accept="image/*" multiple hidden></label>
+  <div class="mut" style="margin:8px 0 12px">Zapisane w telefonie. Wysyłka na Dysk Google dojdzie w kolejnym etapie.</div><div class="grid" id="gr"></div>`;
+  const ps=await photos(w.id),g=$('#gr');if(!g)return;
+  if(!ps.length)g.outerHTML='<div class="mut">Brak zdjęć w tej wyprawie.</div>';
+  ps.forEach(p=>{const im=document.createElement('img');im.src=URL.createObjectURL(p.blob);im.onclick=()=>viewer(p,im.src);g.appendChild(im)});
+}
+function viewer(p,src){
+  const o=document.createElement('div');o.className='ov';
+  o.innerHTML=`<img src="${src}"><div class="row"><button class="s" id="cl">Zamknij</button><button id="rm">Usuń</button></div>`;
+  document.body.appendChild(o);$('#cl').onclick=()=>o.remove();
+  $('#rm').onclick=()=>{if(confirm('Usunąć to zdjęcie?')){st('readwrite').delete(p.id).onsuccess=()=>{const w=W();w.pc=Math.max(0,(w.pc||1)-1);save();o.remove();viewF(w)}}};
+}
+function viewK(w){
+  $('#body').innerHTML=`<h2>Dojazd i paliwo</h2><div class="card"><label>Auto</label><input id="car" value="${esc(w.car||'')}" placeholder="np. Golf 1.6 TDI">
+  <div class="row"><div><label>Przejechane km</label><input id="km" type="number" step="any" inputmode="decimal" value="${w.km||''}"></div>
+  <div><label>Zatankowane litry</label><input id="l" type="number" step="any" inputmode="decimal" value="${w.l||''}"></div></div>
+  <label>Cena paliwa (zł/l)</label><input id="p" type="number" step="any" inputmode="decimal" value="${w.p||''}"></div>
+  <div class="card"><div class="kv"><span>Koszt paliwa</span><span class="big" id="o1"></span></div>
+  <div class="kv"><span>Realne spalanie</span><span class="big" id="o2"></span></div>
+  <div class="kv"><span>Koszt na 1 km</span><b id="o3"></b></div></div>`;
+  outK(w);
+}
+function outK(w){const s=stats(w);
+  $('#o1').textContent=s.cost!==null?money(s.cost):'–';
+  $('#o2').textContent=s.l100!==null?s.l100.toFixed(2)+' l/100 km':'–';
+  $('#o3').textContent=s.ck!==null?money(s.ck):'–';}
+
+/* ---------- lokalizacje ---------- */
+function parse(line){
+  const pats=[/@(-?\d+\.\d+),(-?\d+\.\d+)/,/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,/[?&](?:q|query|ll|destination|center)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/,/(-?\d{1,3}\.\d+)[,;\s]+(-?\d{1,3}\.\d+)/];
+  for(const p of pats){const m=line.match(p);if(m)return{lat:+m[1],lng:+m[2]}}return null}
+function arrive(w,l,auto){
+  l.done=Date.now();save();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+  const n=w.locs.find(x=>!x.done);
+  gpsMsg=(auto?'Dotarto: ':'Odwiedzono: ')+l.name+' ('+fmt(l.done)+')'+(n?'. Następny cel: '+n.name:'. To było ostatnie miejsce.');
+  if(S.cur===w.id&&S.tab==='m')render();
+}
+const dist=(a,b,c,d)=>{const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742000*Math.asin(Math.sqrt(h))};
+function stopTrack(){if(wid!==null){navigator.geolocation.clearWatch(wid);wid=null}}
+function track(){
+  if(wid!==null){stopTrack();gpsMsg='Śledzenie wyłączone.';return render()}
+  if(!navigator.geolocation){gpsMsg='Brak obsługi geolokalizacji.';return render()}
+  S.rad=+$('#rad').value||150;save();const id=S.cur;gpsMsg='Szukam sygnału GPS…';
+  wid=navigator.geolocation.watchPosition(p=>{
+    const w=S.w.find(x=>x.id===id),c=w&&w.locs.find(l=>!l.done);if(!c){gpsMsg='Brak celu.';return upd()}
+    const d=dist(p.coords.latitude,p.coords.longitude,c.lat,c.lng);
+    if(d<=S.rad)return arrive(w,c,true);
+    gpsMsg='Do celu: '+(d>=1000?(d/1000).toFixed(1)+' km':Math.round(d)+' m')+' (±'+Math.round(p.coords.accuracy)+' m)';upd();
+  },e=>{gpsMsg='Błąd GPS: '+e.message;upd()},{enableHighAccuracy:true,maximumAge:5000});
+  render();
+}
+const upd=()=>{const g=$('#gps');if(g)g.textContent=gpsMsg};
+
+/* ---------- zdarzenia ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const a=b.dataset.a,w=W();
+  if(a==='new'){const n=prompt('Nazwa wyprawy','Urbex');if(n===null)return;
+    const x={id:Date.now(),name:n.trim()||'Urbex',date:today(),locs:[],pc:0};S.w.push(x);S.cur=x.id;S.tab='m';save();render()}
+  else if(a==='open'){S.cur=+b.dataset.id;S.tab='m';save();render()}
+  else if(a==='back'){stopTrack();S.cur=null;save();render()}
+  else if(a==='tab'){S.tab=b.dataset.t;render()}
+  else if(a==='mark'){const c=w.locs.find(l=>!l.done);if(c)arrive(w,c,false)}
+  else if(a==='track')track();
+  else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);save();render()}
+  else if(a==='delw'){if(confirm('Usunąć wyprawę razem z listą miejsc? Zdjęcia zostaną w pamięci telefonu.')){stopTrack();S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render()}}
+  else if(a==='add'){let ok=0,bad=0;
+    $('#paste').value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(line=>{
+      const c=parse(line);if(!c){bad++;return}
+      w.locs.push({id:Date.now()+Math.random(),name:(line.includes('|')?line.split('|')[0].trim():'')||('Miejsce '+(w.locs.length+1)),lat:c.lat,lng:c.lng,done:null});ok++});
+    save();render();$('#addmsg').textContent='Dodano: '+ok+(bad?' · nierozpoznane: '+bad+' (skróconych linków maps.app.goo.gl nie da się odczytać — wklej pełny link lub współrzędne)':'')}
+});
+document.addEventListener('input',e=>{
+  const w=W(),i=e.target.id;if(!w)return;
+  if(['car','km','l','p'].includes(i)){w[i]=e.target.value;save();outK(w)}
+  else if(i==='wn'){w.name=e.target.value||'Urbex';save()}
+  else if(i==='wd'&&e.target.value){w.date=e.target.value;save()}
+});
+document.addEventListener('change',async e=>{
+  if(e.target.id!=='pf')return;
+  const w=W();db=db||await openDB();if(!db){alert('Ta przeglądarka nie pozwala zapisać zdjęć.');return}
+  for(const f of e.target.files){await new Promise(r=>{const q=st('readwrite').add({wid:w.id,name:f.name,t:Date.now(),blob:f});q.onsuccess=r;q.onerror=r});w.pc=(w.pc||0)+1}
+  save();viewF(w);
 });
 
-/* ---- lokalizacje ---- */
-function parse(line){
-  const n=v=>parseFloat(v);
-  const pats=[/@(-?\d+\.\d+),(-?\d+\.\d+)/,/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,/[?&](?:q|query|ll|destination|center)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/,/(-?\d{1,3}\.\d+)[,;\s]+(-?\d{1,3}\.\d+)/];
-  for(const p of pats){const m=line.match(p);if(m)return{lat:n(m[1]),lng:n(m[2])}}
-  return null;
-}
-$('#add').onclick=()=>{
-  let ok=0,bad=0;
-  $('#paste').value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(line=>{
-    const c=parse(line);
-    if(!c){bad++;return}
-    let name='';
-    if(line.includes('|'))name=line.split('|')[0].trim();
-    S.locs.push({id:Date.now()+Math.random(),name:name||('Miejsce '+(S.locs.length+1)),lat:c.lat,lng:c.lng,done:null});ok++;
-  });
-  $('#paste').value='';
-  $('#addmsg').textContent='Dodano: '+ok+(bad?(' · nierozpoznane: '+bad+' (skrócone linki maps.app.goo.gl nie zawierają współrzędnych — otwórz je i skopiuj pełny link)'):'');
-  save();renderLocs();
-};
-function cur(){return S.locs.find(l=>!l.done)}
-function renderLocs(){
-  const c=cur();
-  $('#cur').innerHTML=c?`<div class="big">${esc(c.name)}</div><div class="mut">${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
-   <iframe loading="lazy" src="https://maps.google.com/maps?q=${c.lat},${c.lng}&z=15&output=embed"></iframe>
-   <div class="row" style="margin-top:8px"><a class="btn" href="${gm(c)}" target="_blank" rel="noopener">Otwórz w Google Maps</a><button class="s" id="mark">Oznacz jako odwiedzone</button></div>`
-   :'<div class="mut">Brak lokalizacji do odwiedzenia. Dodaj linki poniżej.</div>';
-  if(c)$('#mark').onclick=()=>arrive(c,false);
-  const todo=S.locs.filter(l=>!l.done);
-  $('#todo').innerHTML=todo.map((l,i)=>`<div class="card"><b>${i+1}. ${esc(l.name)}</b><div class="mut">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}</div>
-   <div class="row" style="margin-top:6px"><a class="btn s" href="${gm(l)}" target="_blank" rel="noopener">Mapa</a><button class="s" data-del="${l.id}">Usuń</button></div></div>`).join('')||'<div class="mut">Pusto.</div>';
-  const done=S.locs.filter(l=>l.done).sort((a,b)=>b.done-a.done);
-  $('#arch').innerHTML=done.map(l=>`<div class="card done"><b>✓ ${esc(l.name)}</b><div class="mut">${fmt(l.done)}</div>
-   <a href="${gm(l)}" target="_blank" rel="noopener" class="mut">Otwórz w Google Maps</a></div>`).join('')||'<div class="mut">Jeszcze nic.</div>';
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{S.locs=S.locs.filter(l=>String(l.id)!==b.dataset.del);save();renderLocs()});
-}
-function arrive(l,auto){
-  l.done=Date.now();save();
-  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
-  renderLocs();
-  const n=cur();
-  $('#gps').textContent=(auto?'Dotarto: ':'Odwiedzono: ')+l.name+' ('+fmt(l.done)+')'+(n?'. Następny cel: '+n.name:'. To była ostatnia lokalizacja.');
-}
-function dist(a,b,c,d){const R=6371000,r=x=>x*Math.PI/180,dl=r(c-a),dn=r(d-b);
-  const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
-let wid=null;
-$('#track').onclick=()=>{
-  if(wid!==null){navigator.geolocation.clearWatch(wid);wid=null;$('#track').textContent='▶ Włącz śledzenie';$('#gps').textContent='Śledzenie wyłączone.';return}
-  if(!navigator.geolocation){$('#gps').textContent='Brak obsługi geolokalizacji.';return}
-  $('#track').textContent='■ Zatrzymaj śledzenie';$('#gps').textContent='Szukam sygnału GPS…';
-  wid=navigator.geolocation.watchPosition(p=>{
-    const c=cur();if(!c){$('#gps').textContent='Brak celu.';return}
-    const d=dist(p.coords.latitude,p.coords.longitude,c.lat,c.lng),r=+$('#rad').value||150;
-    $('#gps').textContent='Do celu: '+(d>=1000?(d/1000).toFixed(1)+' km':Math.round(d)+' m')+' (dokładność ±'+Math.round(p.coords.accuracy)+' m)';
-    if(d<=r)arrive(c,true);
-  },e=>{$('#gps').textContent='Błąd GPS: '+e.message},{enableHighAccuracy:true,maximumAge:5000});
-};
-
-/* ---- podróż ---- */
-const money=v=>v.toLocaleString('pl-PL',{style:'currency',currency:'PLN'});
-function calc(){
-  const km=+$('#km').value,l=+$('#lit').value,p=+$('#pr').value;
-  const cost=l*p;
-  $('#o1').textContent=l&&p?money(cost):'–';
-  $('#o2').textContent=km&&l?(l/km*100).toFixed(2)+' l/100 km':'–';
-  $('#o3').textContent=km&&l&&p?money(cost/km):'–';
-  return{km,l,p,cost}
-}
-['km','lit','pr'].forEach(i=>$('#'+i).addEventListener('input',calc));
-$('#savetrip').onclick=()=>{
-  const r=calc();if(!r.km||!r.l||!r.p)return;
-  S.trips.unshift({car:$('#car').value||'Auto',km:r.km,l:r.l,p:r.p,t:Date.now()});save();renderTrips();
-};
-function renderTrips(){
-  $('#trips').innerHTML=S.trips.map((t,i)=>`<div class="card"><b>${esc(t.car)}</b> <span class="mut">${fmt(t.t)}</span>
-   <div>${t.km} km · ${t.l} l · ${money(t.l*t.p)} · ${(t.l/t.km*100).toFixed(2)} l/100 km</div><button class="s" data-tr="${i}">Usuń</button></div>`).join('')||'<div class="mut">Brak zapisanych podróży.</div>';
-  document.querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{S.trips.splice(+b.dataset.tr,1);save();renderTrips()});
-}
-
-/* ---- zdjęcia (IndexedDB) ---- */
-let db=null;
-function openDB(){return new Promise(res=>{
-  try{const r=indexedDB.open('urbex_photos',1);
-  r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id',autoIncrement:true});
-  r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}})}
-const tx=(m)=>db.transaction('p',m).objectStore('p');
-const all=()=>new Promise(r=>{const q=tx('readonly').getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>r([])});
-$('#pdate').value=new Date().toISOString().slice(0,10);
-$('#pfile').onchange=async e=>{
-  if(!db)db=await openDB();
-  if(!db){alert('Ta przeglądarka nie pozwala zapisać zdjęć.');return}
-  const d=$('#pdate').value;
-  for(const f of e.target.files){await new Promise(r=>{const q=tx('readwrite').add({date:d,name:f.name,blob:f});q.onsuccess=r;q.onerror=r})}
-  e.target.value='';renderPhotos();
-};
-async function renderPhotos(){
-  if(!db)db=await openDB();
-  if(!db){$('#photos').innerHTML='<div class="mut">Pamięć zdjęć niedostępna.</div>';return}
-  const ps=await all(),g={};
-  ps.forEach(p=>(g[p.date]=g[p.date]||[]).push(p));
-  const dates=Object.keys(g).sort().reverse();
-  $('#photos').innerHTML=dates.map(d=>`<h2>📁 ${d} (${g[d].length})</h2><div class="grid" id="g${d}"></div>`).join('')||'<div class="mut">Brak zdjęć.</div>';
-  dates.forEach(d=>{const box=document.getElementById('g'+d);
-    g[d].forEach(p=>{const im=document.createElement('img');im.src=URL.createObjectURL(p.blob);im.loading='lazy';
-      im.onclick=()=>{if(confirm('Usunąć to zdjęcie?')){tx('readwrite').delete(p.id).onsuccess=renderPhotos}};box.appendChild(im)})});
-}
-
-renderLocs();renderTrips();calc();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
 </script>
 </body>
 </html>
