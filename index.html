@@ -82,21 +82,33 @@ function render(){
   ({m:viewM,f:viewF,k:viewK})[S.tab](w);
 }
 function viewM(w){
-  const c=w.locs.find(l=>!l.done),todo=w.locs.filter(l=>!l.done),done=w.locs.filter(l=>l.done).sort((a,b)=>b.done-a.done);
-  $('#body').innerHTML=`<h2>Następny cel</h2>
-  <div class="card now">${c?`<div class="big">${esc(c.name)}</div><div class="mut">${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
-   <iframe loading="lazy" src="https://maps.google.com/maps?q=${c.lat},${c.lng}&z=15&output=embed"></iframe>
-   <div class="row"><a class="btn" href="${gm(c)}" target="_blank" rel="noopener">Google Maps</a><button class="s" data-a="mark">Dotarłem</button></div>`
-   :'<div class="mut">Brak miejsc do odwiedzenia. Dodaj je poniżej.</div>'}</div>
-  <div class="card"><button class="w" data-a="track">${wid!==null?'■ Zatrzymaj śledzenie':'▶ Włącz śledzenie GPS'}</button>
+  const todo=w.locs.filter(l=>!l.done),done=w.locs.filter(l=>l.done).sort((a,b)=>b.done-a.done),c=todo[0];
+  const pt=p=>p?`<b>${esc(p.name)}</b> <span class="mut">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span>`:'<span class="mut">nie ustawiono</span>';
+  const lg=w.routed?legs(w):[];
+  $('#body').innerHTML=`
+  <h2>1 · Start</h2><div class="card">${w.start?pt(w.start):'<span class="mut">Moja lokalizacja (pobierana przy układaniu trasy)</span>'}
+   <input id="si" placeholder="Miasto lub link Google Maps" style="margin-top:10px">
+   <div class="row"><button class="s" data-a="sg">📍 Moja lokalizacja</button><button data-a="ss">Ustaw start</button></div></div>
+  <h2>2 · Cel podróży</h2><div class="card">${pt(w.dest)}
+   <input id="di" placeholder="Miasto lub link Google Maps" style="margin-top:10px"><button class="w" data-a="ds">Ustaw cel</button></div>
+  <h2>3 · Miejsca urbexu (${todo.length})</h2><div class="card">
+   <label>Wklej link z Google Maps, współrzędne lub nazwę miejscowości. Możesz wkleić kilka naraz, każde w osobnej linii.</label>
+   <textarea id="paste" rows="3" placeholder="https://www.google.com/maps/@52.40,16.92,17z"></textarea>
+   <button class="w" data-a="add">+ Dodaj do listy</button><div id="msg" class="mut" style="margin-top:8px"></div></div>
+  ${todo.map((l,i)=>`<div class="card"><b>${i+1}. ${esc(l.name)}</b><div class="mut">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}</div>
+   <div class="row" style="margin-top:8px"><a class="btn s" href="${gm(l)}" target="_blank" rel="noopener">Mapa</a>
+   <a class="btn s" href="https://www.google.com/maps/@?api=1&map_action=map&center=${l.lat},${l.lng}&zoom=18&basemap=satellite" target="_blank" rel="noopener">Satelita</a>
+   <button class="s" data-a="dl" data-id="${l.id}">Usuń</button></div></div>`).join('')}
+  ${todo.length?`<h2>4 · Trasa</h2><div class="card">
+   <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx)"><input type="checkbox" id="o-t" style="width:24px;margin:0" ${w.tolls!==false?'checked':''}>Unikaj płatnych dróg</label>
+   <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx);margin:10px 0"><input type="checkbox" id="o-h" style="width:24px;margin:0" ${w.hw?'checked':''}>Unikaj autostrad i dróg ekspresowych</label>
+   <button class="w" data-a="rt">Ułóż trasę</button>
+   ${w.routed?`<div class="mut" style="margin:10px 0">Kolejność ułożona od startu do celu. Szacunkowo ok. ${w.est} km.</div>
+   ${lg.map((x,i)=>`<a class="btn w" style="margin-top:8px" href="${x.u}" target="_blank" rel="noopener">Jedź · część ${i+1} (${x.n} pkt) ›</a>`).join('')}`:''}</div>`:''}
+  <h2>Jazda</h2><div class="card">${c?`Następny: <b>${esc(c.name)}</b>`:'<span class="mut">Brak miejsc do odwiedzenia.</span>'}
+   <div class="row" style="margin-top:10px"><button data-a="track">${wid!==null?'■ Stop GPS':'▶ Włącz GPS'}</button>${c?'<button class="s" data-a="mark">Dotarłem</button>':''}</div>
    <div id="gps" class="mut" style="margin-top:8px">${esc(gpsMsg)}</div>
    <label>Promień wykrycia (m)</label><input id="rad" type="number" inputmode="numeric" value="${S.rad||150}"></div>
-  <h2>Dodaj miejsca</h2><div class="card">
-   <label>Jedno miejsce na linię: link Google Maps lub współrzędne. Opcjonalnie „Nazwa | link”.</label>
-   <textarea id="paste" rows="4" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z"></textarea>
-   <button class="w" data-a="add">Dodaj do listy</button><div id="addmsg" class="mut" style="margin-top:6px"></div></div>
-  <h2>Do odwiedzenia (${todo.length})</h2>${todo.map((l,i)=>`<div class="card"><b>${i+1}. ${esc(l.name)}</b><div class="mut">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}</div>
-   <div class="row" style="margin-top:8px"><a class="btn s" href="${gm(l)}" target="_blank" rel="noopener">Mapa</a><button class="s" data-a="dl" data-id="${l.id}">Usuń</button></div></div>`).join('')||'<div class="mut">Pusto.</div>'}
   <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(l.name)}</b><div class="mut">${fmt(l.done)}</div></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
   <h2>Wyprawa</h2><div class="card"><div class="row"><div><label>Nazwa</label><input id="wn" value="${esc(w.name)}"></div><div><label>Data</label><input id="wd" type="date" value="${w.date}"></div></div>
    <button class="s w" data-a="delw">Usuń całą wyprawę</button></div>`;
@@ -128,6 +140,75 @@ function outK(w){const s=stats(w);
   $('#o1').textContent=s.cost!==null?money(s.cost):'–';
   $('#o2').textContent=s.l100!==null?s.l100.toFixed(2)+' l/100 km':'–';
   $('#o3').textContent=s.ck!==null?money(s.ck):'–';}
+
+
+/* ---------- plan trasy ---------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const setMsg=t=>{const m=$('#msg');if(m)m.textContent=t};
+const FAIL='Nie rozpoznano. Wklej pełny link z google.com/maps, współrzędne (np. 52.40, 16.92) albo nazwę miejscowości. Skróconych linków maps.app.goo.gl nie da się odczytać. W Google Maps przytrzymaj punkt na mapie i skopiuj współrzędne z góry ekranu.';
+async function resolve(line){
+  line=line.trim();let name='';
+  if(line.includes('|')){const i=line.indexOf('|');name=line.slice(0,i).trim();line=line.slice(i+1).trim()}
+  const c=parse(line);
+  if(c)return{...c,name:name||c.lat.toFixed(4)+', '+c.lng.toFixed(4)};
+  if(/^https?:\/\//i.test(line))return null;
+  try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(line));
+    const j=await r.json();
+    if(j[0])return{lat:+j[0].lat,lng:+j[0].lon,name:name||j[0].display_name.split(',').slice(0,2).join(',').trim(),geo:1}}catch(e){}
+  return null;
+}
+async function setPoint(k,sel){
+  const w=W(),v=$(sel).value.trim();if(!v)return;setMsg('Szukam…');
+  const r=await resolve(v);
+  if(!r){alert(FAIL);return}
+  w[k]=r;w.routed=false;save();render();
+}
+function setStartGPS(){
+  const w=W();if(!navigator.geolocation)return alert('Brak geolokalizacji.');
+  navigator.geolocation.getCurrentPosition(p=>{w.start={lat:p.coords.latitude,lng:p.coords.longitude,name:'Moja lokalizacja',gps:1};w.routed=false;save();render()},
+    e=>alert('Nie udało się pobrać lokalizacji: '+e.message),{enableHighAccuracy:true,timeout:10000});
+}
+async function addPlaces(){
+  const w=W(),lines=$('#paste').value.split('\n').map(x=>x.trim()).filter(Boolean);let ok=0,bad=0;
+  for(const l of lines){setMsg('Dodaję… ('+(ok+bad+1)+'/'+lines.length+')');
+    const r=await resolve(l);
+    if(r){w.locs.push({id:Date.now()+Math.random(),name:r.name,lat:r.lat,lng:r.lng,done:null});ok++}else bad++;
+    if(r&&r.geo)await sleep(1100)}
+  w.routed=false;save();render();
+  if(bad)setMsg('Nie rozpoznano: '+bad+'. '+FAIL);
+}
+const hav=(a,b)=>dist(a.lat,a.lng,b.lat,b.lng);
+async function orderRoute(w){
+  let s=w.start;
+  if(!s&&navigator.geolocation)s=await new Promise(r=>navigator.geolocation.getCurrentPosition(p=>r({lat:p.coords.latitude,lng:p.coords.longitude}),()=>r(null),{timeout:8000}));
+  const done=w.locs.filter(l=>l.done);let pts=w.locs.filter(l=>!l.done);
+  const path=[];if(s)path.push(s);if(w.dest)path.push(w.dest);
+  const lo=s?1:0,tail=w.dest?1:0;
+  while(pts.length){
+    let best=null;
+    for(const p of pts)for(let i=lo;i<=path.length-tail;i++){
+      const a=path[i-1],b=path[i],inc=(a?hav(a,p):0)+(b?hav(p,b):0)-(a&&b?hav(a,b):0);
+      if(!best||inc<best.inc)best={p,i,inc}}
+    path.splice(best.i,0,best.p);pts=pts.filter(x=>x!==best.p);
+  }
+  let km=0;for(let i=1;i<path.length;i++)km+=hav(path[i-1],path[i]);
+  w.locs=done.concat(path.slice(lo,path.length-tail));
+  w.est=Math.round(km*1.3/1000);w.routed=true;save();
+}
+function legs(w){
+  const stops=w.locs.filter(l=>!l.done).concat(w.dest?[w.dest]:[]);
+  const av=[w.tolls!==false?'tolls':'',w.hw?'highways':''].filter(Boolean).join('%7C');
+  const f=p=>p.lat+','+p.lng,out=[];let org=w.start&&!w.start.gps?w.start:null;
+  for(let i=0;i<stops.length;i+=10){
+    const ch=stops.slice(i,i+10),d=ch[ch.length-1],wp=ch.slice(0,-1);
+    let u='https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination='+f(d);
+    if(org)u+='&origin='+f(org);
+    if(wp.length)u+='&waypoints='+wp.map(f).join('%7C');
+    if(av)u+='&avoid='+av;
+    out.push({u,n:ch.length});org=d;
+  }
+  return out;
+}
 
 /* ---------- lokalizacje ---------- */
 function parse(line){
@@ -166,13 +247,13 @@ document.addEventListener('click',e=>{
   else if(a==='tab'){S.tab=b.dataset.t;render()}
   else if(a==='mark'){const c=w.locs.find(l=>!l.done);if(c)arrive(w,c,false)}
   else if(a==='track')track();
-  else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);save();render()}
+  else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);w.routed=false;save();render()}
   else if(a==='delw'){if(confirm('Usunąć wyprawę razem z listą miejsc? Zdjęcia zostaną w pamięci telefonu.')){stopTrack();S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render()}}
-  else if(a==='add'){let ok=0,bad=0;
-    $('#paste').value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(line=>{
-      const c=parse(line);if(!c){bad++;return}
-      w.locs.push({id:Date.now()+Math.random(),name:(line.includes('|')?line.split('|')[0].trim():'')||('Miejsce '+(w.locs.length+1)),lat:c.lat,lng:c.lng,done:null});ok++});
-    save();render();$('#addmsg').textContent='Dodano: '+ok+(bad?' · nierozpoznane: '+bad+' (skróconych linków maps.app.goo.gl nie da się odczytać — wklej pełny link lub współrzędne)':'')}
+  else if(a==='add')addPlaces();
+  else if(a==='sg')setStartGPS();
+  else if(a==='ss')setPoint('start','#si');
+  else if(a==='ds')setPoint('dest','#di');
+  else if(a==='rt'){setMsg('');b.textContent='Układam…';orderRoute(w).then(render)}
 });
 document.addEventListener('input',e=>{
   const w=W(),i=e.target.id;if(!w)return;
@@ -181,6 +262,8 @@ document.addEventListener('input',e=>{
   else if(i==='wd'&&e.target.value){w.date=e.target.value;save()}
 });
 document.addEventListener('change',async e=>{
+  if(e.target.id==='o-t'){W().tolls=e.target.checked;W().routed=false;save();render();return}
+  if(e.target.id==='o-h'){W().hw=e.target.checked;W().routed=false;save();render();return}
   if(e.target.id!=='pf')return;
   const w=W();db=db||await openDB();if(!db){alert('Ta przeglądarka nie pozwala zapisać zdjęć.');return}
   for(const f of e.target.files){await new Promise(r=>{const q=st('readwrite').add({wid:w.id,name:f.name,t:Date.now(),blob:f});q.onsuccess=r;q.onerror=r});w.pc=(w.pc||0)+1}
