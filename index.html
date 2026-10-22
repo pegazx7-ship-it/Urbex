@@ -161,7 +161,8 @@ function viewDrive(w){
   <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(short(l.name,60))}</b><div class="mut">${fmt(l.done)}</div>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}<button class="s" style="margin-top:8px;min-height:40px" data-a="undoid" data-id="${l.id}">↩ Cofnij</button></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
   <h2>Chmura</h2><div class="card"><button class="s w" data-a="pull">⬇ Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
   <details><summary>Więcej opcji</summary><div class="card"><label>Promień wykrycia dojazdu (m)</label><input id="rad" type="number" inputmode="numeric" value="${S.rad||150}">
-   <label>Dodaj miejsce (link, współrzędne lub nazwa)</label><textarea id="paste" rows="2"></textarea><button class="s w" data-a="add">+ Dodaj</button><div id="msg" class="mut" style="margin-top:6px"></div></div></details>`;
+   <label>Dodaj miejsce (link, współrzędne lub nazwa)</label><textarea id="paste" rows="2"></textarea><button class="s w" data-a="add">+ Dodaj</button><div id="msg" class="mut" style="margin-top:6px"></div></div>
+  <div class="card"><button class="s w" data-a="delw">Usuń tę wyprawę z telefonu</button><div class="mut" style="margin-top:6px">Usuwa też zdjęcia tej wyprawy zapisane w telefonie.</div></div></details>`;
 }
 async function viewF(w){
   $('#body').innerHTML=`<h2>Zdjęcia — ${w.date}</h2><label class="btn w" style="display:flex">📷 Dodaj zdjęcia<input id="pf" type="file" accept="image/*" multiple hidden></label>
@@ -292,6 +293,13 @@ async function pull(){
   syncMsg('Pobieram…');
   try{
     const t=await api('/trip');if(!t)return syncMsg('W chmurze nie ma jeszcze trasy.');
+    if(t.deleted){
+      const lw=S.w.find(x=>x.cid===t.id);
+      if(!lw)return syncMsg('W chmurze nie ma aktywnej trasy.');
+      if(lw.pc>0)return syncMsg('Trasa „'+lw.name+'” została usunięta na komputerze, ale ma '+lw.pc+' zdjęć na tym telefonie, więc jej nie kasuję. Usuń ją ręcznie (Więcej opcji), gdy zdjęcia będą bezpieczne.');
+      S.w=S.w.filter(x=>x!==lw);if(S.cur===lw.id)S.cur=null;save();render();
+      return syncMsg('Trasa „'+lw.name+'” została usunięta na komputerze, więc usunięto ją też z telefonu.');
+    }
     let w=S.w.find(x=>x.cid===t.id);
     if(!w){w={id:Date.now(),cid:t.id,locs:[],pc:0};S.w.push(w)}
     const dn=new Map(w.locs.filter(l=>l.done).map(l=>[l.id,l.done]));
@@ -313,6 +321,24 @@ function arrive(w,l,auto){
 const dist=(a,b,c,d)=>{const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742000*Math.asin(Math.sqrt(h))};
 function stopTrack(){}
 
+async function delPhotos(id){
+  db=db||await openDB();if(!db)return;
+  const ps=await photos(id);
+  for(const p of ps)await new Promise(r=>{const q=st('readwrite').delete(p.id);q.onsuccess=r;q.onerror=r});
+}
+async function deleteTrip(w){
+  const phone=!wide();
+  if(!confirm(phone?'Usunąć tę wyprawę z telefonu razem ze zdjęciami?':'Usunąć tę wyprawę z tego urządzenia?'))return;
+  if(!phone&&w.cid&&S.worker&&S.key&&confirm('Usunąć też z chmury? Telefon usunie ją przy najbliższym dotknięciu „Pobierz”.')){
+    try{
+      const t=await api('/trip');
+      if(t&&t.id===w.cid&&!t.deleted)await api('/trip',{method:'PUT',body:JSON.stringify({id:w.cid,deleted:true,name:w.name,locs:[]})});
+    }catch(e){alert('Nie udało się usunąć z chmury: '+e.message+' Wyprawa zostanie usunięta tylko tutaj.')}
+  }
+  if(phone)await delPhotos(w.id);
+  S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render();
+}
+
 /* ---------- zdarzenia ---------- */
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;
@@ -332,7 +358,7 @@ document.addEventListener('click',e=>{
   }
   else if(a==='go'){w.arrived=null;save();setTimeout(render,400)}
   else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);w.routed=false;save();render()}
-  else if(a==='delw'){if(confirm('Usunąć wyprawę razem z listą miejsc? Zdjęcia zostaną w pamięci telefonu.')){stopTrack();S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render()}}
+  else if(a==='delw')deleteTrip(w);
   else if(a==='push')push(w);
   else if(a==='pull')pull();
   else if(a==='wk'){let wk=$('#wk').value.trim().replace(/\/+$/,'');if(wk&&!/^https?:\/\//i.test(wk))wk='https://'+wk;S.worker=wk;S.key=$('#kk').value;save();alert('Zapisano')}
