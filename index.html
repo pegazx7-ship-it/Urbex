@@ -6,52 +6,79 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Urbex">
-<meta name="theme-color" content="#eef3f8">
+<meta name="theme-color" content="#F1F5F2">
 <script>try{var t=localStorage.getItem("urbex_theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;800&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Urbex</title>
 <style>
-:root{--bg:#eef3f8;--card:#ffffff;--tx:#0b1f33;--mut:#5b6b7c;--ac:#0e7490;--on:#ffffff;--bd:#d6e1ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme]){--bg:#0a1623;--card:#10243a;--tx:#e3edf7;--mut:#94a9bf;--ac:#22d3ee;--on:#04222b;--bd:#1f3b57;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0a1623;--card:#10243a;--tx:#e3edf7;--mut:#94a9bf;--ac:#22d3ee;--on:#04222b;--bd:#1f3b57;color-scheme:dark}
+:root{--bg:#F1F5F2;--card:#FFFFFF;--c2:#DDE7E3;--tx:#0E2A2B;--mut:#4F6D69;--ac:#2F6663;--btn:#0E2A2B;--on:#C6F432;--line:#0E2A2B;--bd:#D3E0DB;--mapbg:#0E2A2B;--cont:#1D4A48;--done:#7E9995;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--bg:#0F1B1C;--card:#182A2B;--c2:#22393A;--tx:#E6EEEB;--mut:#8CA9A5;--ac:#C6F432;--btn:#C6F432;--on:#0A1415;--line:#C6F432;--bd:#1E3A3B;--mapbg:#070F10;--cont:#12292A;--done:#6F8A86;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1B1C;--card:#182A2B;--c2:#22393A;--tx:#E6EEEB;--mut:#8CA9A5;--ac:#C6F432;--btn:#C6F432;--on:#0A1415;--line:#C6F432;--bd:#1E3A3B;--mapbg:#070F10;--cont:#12292A;--done:#6F8A86;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
-main{max-width:560px;margin:0 auto;padding:12px 14px calc(96px + env(safe-area-inset-bottom,0px))}
-h1{font-size:30px;margin:8px 0 14px}h2{font-size:13px;margin:20px 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:10px}
-input,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);margin:4px 0 10px}
-label{font-size:13px;color:var(--mut)}
-button,.btn{font:inherit;font-weight:600;border:0;border-radius:12px;min-height:48px;padding:12px 16px;background:var(--ac);color:var(--on);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-button.s,.btn.s{background:var(--bd);color:var(--tx)}button.w{width:100%}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Manrope,-apple-system,system-ui,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:10px 14px calc(100px + env(safe-area-inset-bottom,0px))}
+h1{font-size:30px;margin:0;font-weight:800}
+h2{font-size:12px;margin:22px 0 8px;color:var(--ac);text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.card{background:var(--card);border-radius:18px;padding:14px;margin-bottom:10px;border:1px solid var(--bd)}
+input,textarea{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--bd);border-radius:14px;background:var(--bg);color:var(--tx);margin:4px 0 10px}
+input[type=checkbox]{width:24px}
+label{font-size:13px;color:var(--mut);font-weight:600}
+button,.btn{font:inherit;font-weight:800;border:0;border-radius:999px;min-height:48px;padding:10px 20px;background:var(--btn);color:var(--on);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+button.s,.btn.s{background:var(--c2);color:var(--tx)}
+.o{background:transparent!important;color:var(--line)!important;box-shadow:inset 0 0 0 1.5px var(--line)}
+.w{width:100%}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
-.bar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
-.bar button{flex:1;background:none;color:var(--mut);border-radius:0;min-height:58px;font-size:13px;flex-direction:column;gap:2px}
-.bar button.on{color:var(--ac)}.bar span{font-size:22px}
-.top{display:flex;align-items:center;gap:10px;margin:4px 0 12px}.top button{min-height:40px;padding:6px 12px}
-.big{font-size:26px;font-weight:700}.mut{color:var(--mut);font-size:14px}.now{border:2px solid var(--ac)}.done{opacity:.7}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
-iframe{width:100%;height:200px;border:0;border-radius:12px;background:var(--bd);margin:8px 0}
+.sp{flex:1}
+.top{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.top .s{min-height:44px;padding:6px 16px;white-space:nowrap;flex:none}
+.tt{font-size:17px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thm{width:44px;min-height:44px;padding:0!important;border-radius:50%!important;flex:none}
+.bar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:6px;background:var(--bg);border-top:1px solid var(--bd);padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));z-index:5}
+.bar button{flex:1;max-width:170px;background:none;color:var(--mut);min-height:48px;font-size:14px;gap:6px;padding:0 10px}
+.bar button.on{background:var(--btn);color:var(--on)}
+.mapw{margin:0 -14px;background:var(--mapbg);padding-bottom:26px}
+.mapw svg{display:block;width:100%;height:auto;max-height:380px}
+.mapw.empty{padding:44px 24px 70px;text-align:center;color:#9DB8B3;font-weight:600}
+.mp text{font:700 11px Manrope,-apple-system,system-ui,sans-serif;fill:#E6EEEB;stroke:var(--mapbg);stroke-width:3px;paint-order:stroke;stroke-linejoin:round}
+.mp .dn text{fill:var(--done)}
+.mp .cont path{fill:none;stroke:var(--cont);stroke-width:1.5}
+.mp .sg{fill:none;stroke:var(--done);stroke-width:2}
+.mp .sa{fill:none;stroke:#C6F432;stroke-width:4;stroke-linecap:round;stroke-dasharray:1 9}
+.mp .dl{fill:#C6F432}.mp .dc{fill:#C6F432}.mp .rg{fill:none;stroke:#C6F432;stroke-opacity:.4;stroke-width:2}
+.mp .dg{fill:var(--done)}.mp .ck{fill:none;stroke:var(--mapbg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mp .ds{fill:var(--mapbg);stroke:var(--done);stroke-width:2}.mp .dd{fill:#E6EEEB;stroke:#C6F432;stroke-width:2}
+.mp g[data-a]{cursor:pointer}
+.mapw .pinfo{padding:2px 18px 0;color:#9DB8B3;font-size:13px;min-height:22px}
+.sheet{position:relative;margin:-26px -14px 0;padding:18px 14px 0;background:var(--bg);border-radius:26px 26px 0 0;box-shadow:0 -12px 30px rgba(0,0,0,.28)}
+.kick{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--ac);text-transform:uppercase}
+.big{font-size:24px;font-weight:800}.mut{color:var(--mut);font-size:14px}
+.now{border:2px solid var(--line)}.done{opacity:.75}.ok{border:2px solid var(--line)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin:0 -14px;padding-left:14px;padding-right:14px}
+.chip{flex:none;min-height:40px;padding:0 14px;font-size:13px;font-weight:700;background:var(--c2);color:var(--tx);border-radius:14px}
+.bigin{font-size:22px;font-weight:800}
+.go{min-height:56px;font-size:18px;margin-top:10px}
+.hero{background:var(--mapbg);color:#E6EEEB;border-radius:0 0 28px 28px;margin:-10px -14px 8px;padding:20px 22px 24px}
+.hero .mut{color:#9DB8B3}.herobig{font-size:54px;font-weight:800;line-height:1.05;color:#C6F432}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}
 .kv{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--bd)}
 .ov{position:fixed;inset:0;background:#000e;display:flex;flex-direction:column;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));z-index:9}
 .ov img{flex:1;min-height:0;object-fit:contain;width:100%}
-@media(min-width:900px){main{max-width:780px}}
-.bigin{font-size:22px;font-weight:700}
-.go{width:100%;min-height:64px;font-size:20px;margin-top:10px}
-.ok{border:2px solid var(--ac)}
 textarea{resize:vertical}
-details>summary{cursor:pointer;padding:10px 0;color:var(--mut)}
-.tb{max-width:560px;margin:0 auto;padding:10px 14px 0;display:flex;justify-content:flex-end;align-items:center;gap:8px;color:var(--mut);font-size:15px}
-@media(min-width:900px){.tb{max-width:780px}}
-.sw{position:relative;width:54px;height:32px;display:inline-block}
-.sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;padding:0;border:0;cursor:pointer;z-index:2}
-.sl{position:absolute;inset:0;background:var(--bd);border-radius:32px;transition:background .2s}
-.sl:before{content:"";position:absolute;width:26px;height:26px;left:3px;top:3px;background:var(--ac);border-radius:50%;transition:transform .2s}
-.sw input:checked+.sl:before{transform:translateX(22px)}
+details>summary{cursor:pointer;padding:10px 0;color:var(--mut);font-weight:700}
+a{color:var(--ac)}
+.cols{display:block}
+@media(min-width:900px){
+ main{max-width:1100px;padding-bottom:40px}
+ .cols{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:28px;align-items:start}
+ .cols .mapw{margin:0;border-radius:20px;padding-bottom:16px}
+ .hero{margin:0 0 12px;border-radius:20px}
+}
 </style>
 </head>
 <body>
-<div class="tb"><span aria-hidden="true">☀️</span><label class="sw" title="Tryb jasny / ciemny"><input type="checkbox" id="th" aria-label="Tryb ciemny"><span class="sl"></span></label><span aria-hidden="true">🌙</span></div>
 <main id="app"></main>
 <script>
 const $=s=>document.querySelector(s);
@@ -87,10 +114,65 @@ function costs(w){
 }
 const fe=x=>{const l=num(x.l),k=num(x.km),p=num(x.p);return money(l*p)+' · '+(k&&l?(l/k*100).toFixed(2)+' l/100 km':'– l/100 km')+(k&&l*p?' · '+money(l*p/k)+'/km':'')};
 const lk=t=>{t=String(t||'').trim();return t?(/^https?:\/\//i.test(t)?t:'https://'+t):''};
+const ICON={
+ sun:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+ moon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>',
+ car:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l2-6h14l2 6v4H3zM3 14h18"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>',
+ cam:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+ fuel:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M5 21h10M15 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V9l-3-3M7 9h6"/></svg>'
+};
+const curTheme=()=>document.documentElement.getAttribute('data-theme')||'light';
+const themeBtn=()=>`<button class="s thm" data-a="theme" aria-label="Przełącz motyw jasny lub ciemny">${curTheme()==='dark'?ICON.sun:ICON.moon}</button>`;
+const coordLike=t=>/^-?\d+(\.\d+)?\s*[,;]\s*-?\d+(\.\d+)?$/.test(String(t||'').trim());
+const lab=(n,name,m=13)=>{let t=String(name||'').replace(/\s+/g,' ').trim();if(coordLike(t))t='';if(t.length>m)t=t.slice(0,m-1)+'…';return n?(n+(t?' · ':'')+t):t};
+function mapSvg(w){
+  const seq=[];
+  if(w.start)seq.push({k:'s',id:'start',p:w.start,t:'Start',full:'Start: '+(w.start.name||'')});
+  w.locs.forEach((l,i)=>seq.push({k:'l',id:String(l.id),p:l,done:!!l.done,t:lab(i+1,l.name),full:(i+1)+'. '+(l.name||'Bez opisu')}));
+  if(w.dest)seq.push({k:'d',id:'dest',p:w.dest,t:lab(0,w.dest.name)||'Meta',full:'Cel: '+(w.dest.name||'')});
+  if(!seq.length)return '<div class="mapw empty">Mapa pojawi się, gdy ustawisz start, cel lub dodasz miejsca.</div>';
+  const W0=358,H0=270,P=42,lats=seq.map(s=>s.p.lat),lngs=seq.map(s=>s.p.lng);
+  const kx=Math.cos(lats.reduce((a,b)=>a+b,0)/lats.length*Math.PI/180);
+  const minLa=Math.min(...lats),maxLa=Math.max(...lats),minLo=Math.min(...lngs),maxLo=Math.max(...lngs);
+  const sx=Math.max((maxLo-minLo)*kx,1e-4),sy=Math.max(maxLa-minLa,1e-4);
+  const sc=Math.min((W0-2*P)/sx,(H0-2*P)/sy),ox=(W0-sx*sc)/2,oy=(H0-sy*sc)/2;
+  seq.forEach(s=>{s.x=ox+(s.p.lng-minLo)*kx*sc;s.y=oy+(maxLa-s.p.lat)*sc});
+  const cur=seq.find(s=>s.k==='l'&&!s.done);
+  let segs='';
+  for(let i=1;i<seq.length;i++){const a=seq[i-1],b=seq[i],g=(b.k==='l'&&b.done)||b.k==='s';
+    segs+=`<path class="${g?'sg':'sa'}" d="M${a.x.toFixed(1)} ${a.y.toFixed(1)}L${b.x.toFixed(1)} ${b.y.toFixed(1)}"/>`}
+  const boxes=[],order=(cur?[cur]:[]).concat(seq.filter(s=>s!==cur));
+  order.forEach(s=>{
+    const w1=s.t.length*6.4+4,h=14,r=s===cur?24:11;
+    const cand=[[s.x-w1/2,s.y-r-h],[s.x-w1/2,s.y+r],[s.x+r,s.y-h/2],[s.x-r-w1,s.y-h/2]];
+    let pick=null,first=null;
+    for(const q of cand){
+      const x0=Math.max(3,Math.min(W0-3-w1,q[0])),y0=Math.max(2,Math.min(H0-h-2,q[1])),bx={x0,y0,x1:x0+w1,y1:y0+h};
+      if(!first)first=bx;
+      const hit=boxes.some(o=>bx.x0<o.x1&&bx.x1>o.x0&&bx.y0<o.y1&&bx.y1>o.y0)||seq.some(o=>o!==s&&o.x>bx.x0-8&&o.x<bx.x1+8&&o.y>bx.y0-8&&o.y<bx.y1+8);
+      if(!hit){pick=bx;break}
+    }
+    pick=pick||first;boxes.push(pick);s.lx=pick.x0;s.ly=pick.y1-3;
+  });
+  const f=n=>n.toFixed(1);
+  const dots=seq.slice().sort((a,b)=>(a===cur)-(b===cur)).map(s=>{
+    let g;
+    if(s.k==='s')g=`<circle cx="${f(s.x)}" cy="${f(s.y)}" r="6" class="ds"/>`;
+    else if(s.k==='d')g=`<rect x="${f(s.x-7)}" y="${f(s.y-7)}" width="14" height="14" rx="3" class="dd"/>`;
+    else if(s.done)g=`<circle cx="${f(s.x)}" cy="${f(s.y)}" r="8" class="dg"/><path class="ck" d="M${f(s.x-3.5)} ${f(s.y)}l2.5 2.5l4.5-5"/>`;
+    else if(s===cur)g=`<circle cx="${f(s.x)}" cy="${f(s.y)}" r="21" class="rg"/><circle cx="${f(s.x)}" cy="${f(s.y)}" r="12" class="dc"/>`;
+    else g=`<circle cx="${f(s.x)}" cy="${f(s.y)}" r="8" class="dl"/>`;
+    return `<g data-a="pin" data-id="${s.id}" class="${s.done?'dn':''}"><title>${esc(s.full)}</title><circle cx="${f(s.x)}" cy="${f(s.y)}" r="20" fill="transparent"/>${g}<text x="${f(s.lx)}" y="${f(s.ly)}">${esc(s.t)}</text></g>`;
+  }).join('');
+  const cont='<g class="cont"><path d="M-10 60C60 20 120 100 200 70S320 10 380 50"/><path d="M-10 120C70 80 130 160 210 130S320 70 380 110"/><path d="M-10 180C80 140 140 220 220 190S320 130 380 170"/><path d="M-10 240C90 200 150 280 230 250S320 190 380 230"/></g>';
+  const left=seq.filter(s=>s.k==='l'&&!s.done).length;
+  return `<div class="mapw"><svg class="mp" viewBox="0 0 ${W0} ${H0}" role="img" aria-label="Schemat trasy, do odwiedzenia: ${left}">${cont}${segs}${dots}</svg><div id="pinfo" class="pinfo">Zielone: jeszcze nie byłeś. Szare: odwiedzone. Dotknij kropki, aby zobaczyć nazwę.</div></div>`;
+}
+const topBar=(w)=>`<div class="top"><button class="s" data-a="back">‹ Wyprawy</button><span class="tt">${esc(w.name)}</span><span class="sp"></span>${themeBtn()}</div>`;
 function render(){
   const w=W(),app=$('#app');
   if(!w){
-    app.innerHTML=`<h1>Urbex</h1><button class="w" data-a="new">+ Nowa wyprawa</button><button class="s w" data-a="pull" style="margin-top:8px">⬇ Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:6px"></div><h2>Wyprawy</h2>`+
+    app.innerHTML=`<div class="top"><h1>Urbex</h1><span class="sp"></span>${themeBtn()}</div><button class="w" data-a="new">+ Nowa wyprawa</button><button class="s w" data-a="pull" style="margin-top:8px">Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:6px"></div><h2>Wyprawy</h2>`+
     ([...S.w].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
       const s=costs(x),v=x.locs.filter(l=>l.done).length;
       return `<div class="card" data-a="open" data-id="${x.id}"><b>${esc(x.name)}</b> <span class="mut">${x.date}</span>
@@ -100,12 +182,12 @@ function render(){
   }
   if(S.tab==='m')S.tab='d';
   if(wide()){
-    app.innerHTML=`<div class="top"><button class="s" data-a="back">‹ Wyprawy</button><b>${esc(w.name)}</b> <span class="mut">planowanie trasy</span></div><div id="body"></div>`;
+    app.innerHTML=topBar(w)+`<div id="body"></div>`;
     viewPlan(w);return;
   }
-  const tabs=[['d','🚗','Jazda'],['f','📷','Zdjęcia'],['k','⛽','Koszt']];
-  app.innerHTML=`<div class="top"><button class="s" data-a="back">‹ Wyprawy</button><b>${esc(w.name)}</b></div><div id="body"></div>
-  <div class="bar">${tabs.map(t=>`<button data-a="tab" data-t="${t[0]}" class="${S.tab===t[0]?'on':''}"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div>`;
+  const tabs=[['d',ICON.car,'Trasa'],['k',ICON.fuel,'Koszty'],['f',ICON.cam,'Zdjęcia']];
+  app.innerHTML=topBar(w)+`<div id="body"></div>
+  <div class="bar">${tabs.map(t=>`<button data-a="tab" data-t="${t[0]}" class="${S.tab===t[0]?'on':''}">${t[1]}${t[2]}</button>`).join('')}</div>`;
   ({d:viewDrive,f:viewF,k:viewK})[S.tab](w);
 }
 const short=(t,n=40)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t?(t.length>n?t.slice(0,n)+'…':t):'Bez opisu'};
@@ -125,27 +207,31 @@ function nextUrl(w){
 }
 function viewPlan(w){
   const todo=w.locs.filter(l=>!l.done),lg=w.routed?legs(w):[];
-  $('#body').innerHTML=`
+  const left=`
   <h2>1 · Start</h2><div class="card">${w.start?pt(w.start):'<span class="mut">Moja lokalizacja (pobierana przy układaniu trasy)</span>'}
    <input id="si" placeholder="Miasto lub link Google Maps" style="margin-top:10px">
-   <div class="row"><button class="s" data-a="sg">📍 Moja lokalizacja</button><button data-a="ss">Ustaw start</button></div><div id="ms" class="mut" style="margin-top:8px"></div></div>
+   <div class="row"><button class="s" data-a="sg">Moja lokalizacja</button><button data-a="ss">Ustaw start</button></div><div id="ms" class="mut" style="margin-top:8px"></div></div>
   <h2>2 · Cel podróży</h2><div class="card">${pt(w.dest)}
    <input id="di" placeholder="Miasto lub link Google Maps" style="margin-top:10px"><button class="w" data-a="ds">Ustaw cel</button><div id="md" class="mut" style="margin-top:8px"></div></div>
-  <h2>3 · Miejsca urbexu (${todo.length})</h2><div class="card">
+  <h2>3 · Dodaj miejsca urbexu</h2><div class="card">
    <label>Wklej link z Google Maps, współrzędne lub nazwę miejscowości. Kilka naraz, każde w osobnej linii. Opcjonalnie „Co to za miejsce | link”.</label>
-   <textarea id="paste" rows="3" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z"></textarea>
-   <button class="w" data-a="add">+ Dodaj do listy</button><div id="msg" class="mut" style="margin-top:8px"></div></div>
+   <textarea id="paste" rows="4" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z"></textarea>
+   <button class="w" data-a="add">+ Dodaj do listy</button><div id="msg" class="mut" style="margin-top:8px"></div></div>`;
+  const right=`
+  ${mapSvg(w)}
+  <h2>Kolejność miejsc (${todo.length})</h2>
   ${todo.map((l,i)=>`<div class="card"><b>${i+1}.</b>${fields(l)}
-   <div class="row">${mapLinks(l)}<button class="s" data-a="dl" data-id="${l.id}">Usuń</button></div></div>`).join('')}
+   <div class="row">${mapLinks(l)}<button class="s" data-a="dl" data-id="${l.id}">Usuń</button></div></div>`).join('')||'<div class="mut">Brak miejsc. Dodaj je po lewej.</div>'}
   ${todo.length?`<h2>4 · Trasa</h2><div class="card">
-   <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx)"><input type="checkbox" id="o-t" style="width:24px;margin:0" ${w.tolls!==false?'checked':''}>Unikaj płatnych dróg</label>
-   <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx);margin:10px 0"><input type="checkbox" id="o-h" style="width:24px;margin:0" ${w.hw?'checked':''}>Unikaj autostrad i dróg ekspresowych</label>
+   <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx)"><input type="checkbox" id="o-t" style="margin:0" ${w.tolls!==false?'checked':''}>Unikaj płatnych dróg</label>
+   <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx);margin:10px 0"><input type="checkbox" id="o-h" style="margin:0" ${w.hw?'checked':''}>Unikaj autostrad i dróg ekspresowych</label>
    <button class="w" data-a="rt">Ułóż kolejność miejsc</button>
    ${w.routed?`<div class="mut" style="margin:10px 0">Kolejność ułożona od startu do celu. Szacunkowo ok. ${w.est} km. Podgląd całej trasy:</div>
    ${lg.map((x,i)=>`<a class="btn s w" style="margin-top:8px" href="${x.u}" target="_blank" rel="noopener">Zobacz trasę w Google Maps · część ${i+1} (${x.n} pkt) ›</a>`).join('')}`:''}</div>`:''}
-  <h2>5 · Wyślij na telefon</h2><div class="card"><button class="w" data-a="push">⬆ Wyślij trasę do chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
+  <h2>5 · Wyślij na telefon</h2><div class="card"><button class="w" data-a="push">Wyślij trasę do chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
   <h2>Wyprawa</h2><div class="card"><div class="row"><div><label>Nazwa</label><input id="wn" value="${esc(w.name)}"></div><div><label>Data</label><input id="wd" type="date" value="${w.date}"></div></div>
    <button class="s w" data-a="delw">Usuń całą wyprawę</button></div>`;
+  $('#body').innerHTML=`<div class="cols"><div>${left}</div><div>${right}</div></div>`;
 }
 function viewDrive(w){
   const todo=w.locs.filter(l=>!l.done),done=w.locs.filter(l=>l.done).sort((a,b)=>b.done-a.done),c=todo[0];
@@ -153,34 +239,34 @@ function viewDrive(w){
   let main;
   if(al){
     const nm=c?short(c.name):(w.dest?'cel: '+w.dest.name:'');
-    main=`<div class="card ok"><div class="mut">${w.arrived.auto?'Jesteś na miejscu':'Dotarłem'} · ${fmt(w.arrived.t)}</div><div class="big">✓ ${esc(short(al.name,60))}</div>
+    main=`<div class="card ok"><div class="kick">${w.arrived.auto?'Jesteś na miejscu':'Dotarłem'} · ${fmt(w.arrived.t)}</div><div class="big">${esc(short(al.name,60))}</div>
      <label>Notatka z tego miejsca</label><textarea rows="2" data-lid="${al.id}" data-f="note">${esc(al.note||'')}</textarea></div>
-     ${url?`<a class="btn go" data-a="go" href="${url}" target="_blank" rel="noopener">Jedziemy dalej › ${esc(nm)}</a>
+     ${url?`<a class="btn go w" data-a="go" href="${url}" target="_blank" rel="noopener">Jedziemy dalej › ${esc(nm)}</a>
      <div class="mut" style="margin-top:6px">Otworzy Google Maps z trasą przez pozostałe miejsca${w.dest?' do celu':''}.</div>`
      :`<div class="card">Koniec trasy ✓</div><button class="s w" data-a="go">Zamknij</button>`}
      <button class="s w" style="margin-top:10px" data-a="undo">↩ Cofnij „Dotarłem”</button>`;
   }else if(c){
-    main=`<div class="card now"><div class="mut">Następny cel · ${done.length+1} z ${w.locs.length}</div>
+    main=`<div class="card now"><div class="kick">Cel ${done.length+1} z ${w.locs.length} · ${w.tolls!==false?'bez opłat':'płatne drogi dozwolone'}</div>
      <label>Trasa</label><textarea class="bigin" rows="2" data-lid="${c.id}" data-f="name" placeholder="Co to za miejsce, np. Stara fabryka, wejście od tyłu">${esc(c.name||'')}</textarea>
      ${linkRow(c)}
-     <div class="row" style="margin-top:8px">${mapLinks(c)}</div>
-     <button class="go" data-a="mark">Dotarłem</button>
-     ${done.length?'<button class="s w" style="margin-top:8px" data-a="prev">← Poprzednie miejsce</button>':''}
-     <a class="btn s w" style="margin-top:8px" href="${url}" target="_blank" rel="noopener">Nawiguj w Google Maps</a></div>`;
+     <div class="row">${mapLinks(c)}${done.length?'<button class="s" data-a="prev">← Poprzednie</button>':''}</div>
+     <div class="row"><button class="go" data-a="mark">Dotarłem</button><a class="btn go o" href="${url}" target="_blank" rel="noopener">Nawiguj</a></div></div>`;
   }else{
     main=`<div class="card">${w.locs.length?'Wszystkie miejsca odwiedzone ✓':'Brak miejsc. Pobierz trasę z chmury.'}${w.dest?`<div class="mut" style="margin-top:6px">Cel podróży: ${esc(w.dest.name)}</div>`:''}</div>
-     ${url?`<a class="btn go" href="${url}" target="_blank" rel="noopener">Jedź do celu</a>`:''}`;
+     ${url?`<a class="btn go w" href="${url}" target="_blank" rel="noopener">Jedź do celu</a>`:''}`;
   }
-  $('#body').innerHTML=main+`
-  ${todo.length>1?`<h2>Dalej (${todo.length-1})</h2>`+todo.slice(1).map((l,i)=>`<div class="card"><b>${done.length+i+2}.</b>${fields(l)}<div class="row">${mapLinks(l)}</div></div>`).join(''):''}
+  const rest=todo.slice(1);
+  $('#body').innerHTML=mapSvg(w)+`<div class="sheet">`+main+`
+  ${rest.length?`<h2>Dalej (${rest.length})</h2><div class="chips">${rest.map((l,i)=>`<button class="chip" data-a="pin" data-id="${l.id}">${lab(done.length+i+2,l.name,18)||(done.length+i+2)}</button>`).join('')}</div>
+  <details><summary>Edytuj opisy kolejnych miejsc</summary>${rest.map((l,i)=>`<div class="card"><b>${done.length+i+2}.</b>${fields(l)}<div class="row">${mapLinks(l)}</div></div>`).join('')}</details>`:''}
   <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(short(l.name,60))}</b><div class="mut">${fmt(l.done)}</div>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}<button class="s" style="margin-top:8px;min-height:40px" data-a="undoid" data-id="${l.id}">↩ Cofnij</button></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
-  <h2>Chmura</h2><div class="card"><button class="s w" data-a="pull">⬇ Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
+  <h2>Chmura</h2><div class="card"><button class="s w" data-a="pull">Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
   <details><summary>Więcej opcji</summary><div class="card"><label>Promień wykrycia dojazdu (m)</label><input id="rad" type="number" inputmode="numeric" value="${S.rad||150}">
    <label>Dodaj miejsce (link, współrzędne lub nazwa)</label><textarea id="paste" rows="2"></textarea><button class="s w" data-a="add">+ Dodaj</button><div id="msg" class="mut" style="margin-top:6px"></div></div>
-  <div class="card"><button class="s w" data-a="delw">Usuń tę wyprawę z telefonu</button><div class="mut" style="margin-top:6px">Usuwa też zdjęcia tej wyprawy zapisane w telefonie.</div></div></details>`;
+  <div class="card"><button class="s w" data-a="delw">Usuń tę wyprawę z telefonu</button><div class="mut" style="margin-top:6px">Usuwa też zdjęcia tej wyprawy zapisane w telefonie.</div></div></details></div>`;
 }
 async function viewF(w){
-  $('#body').innerHTML=`<h2>Zdjęcia — ${w.date}</h2><label class="btn w" style="display:flex">📷 Dodaj zdjęcia<input id="pf" type="file" accept="image/*" multiple hidden></label>
+  $('#body').innerHTML=`<h2>Zdjęcia — ${w.date}</h2><label class="btn w" style="display:flex">Dodaj zdjęcia<input id="pf" type="file" accept="image/*" multiple hidden></label>
   <div class="mut" style="margin:8px 0 12px">Zapisane w telefonie. Wysyłka na Dysk Google dojdzie w kolejnym etapie.</div><div class="grid" id="gr"></div>`;
   const ps=await photos(w.id),g=$('#gr');if(!g)return;
   if(!ps.length)g.outerHTML='<div class="mut">Brak zdjęć w tej wyprawie.</div>';
@@ -194,7 +280,7 @@ function viewer(p,src){
 }
 function viewK(w){
   const f=fuelOf(w),last=f.length?f[f.length-1].p:'',lo=w.lodging||{};
-  $('#body').innerHTML=`<h2>Auto i osoby</h2><div class="card"><label>Auto</label><input id="car" value="${esc(w.car||'')}" placeholder="np. Golf 1.6 TDI">
+  $('#body').innerHTML=`<div class="hero" id="hero"></div><h2>Auto i osoby</h2><div class="card"><label>Auto</label><input id="car" value="${esc(w.car||'')}" placeholder="np. Golf 1.6 TDI">
    <label>Liczba osób w wyjeździe</label><input id="ppl" inputmode="numeric" value="${esc(w.people||'')}" placeholder="np. 3"></div>
   <h2>Tankowania (${f.length})</h2>
   ${f.map((x,i)=>`<div class="card"><b>Tankowanie ${i+1}</b>
@@ -219,6 +305,7 @@ function viewK(w){
 }
 function outK(w){
   const c=costs(w),el=$('#sum');if(!el)return;
+  const h=$('#hero');if(h)h.innerHTML=`<div class="mut">Na osobę (${c.hasPeople?c.n+' os.':'wpisz liczbę osób'})</div><div class="herobig">${money(c.tpp)}</div><div class="mut">Razem ${money(c.total)}${c.l100!==null?' · spalanie '+c.l100.toFixed(1)+' l/100 km':''}</div>`;
   const row=(a,b,big)=>`<div class="kv"><span>${a}</span>${big?`<span class="big">${b}</span>`:`<b>${b}</b>`}</div>`;
   el.innerHTML=row('Przejechane',c.km?Math.round(c.km)+' km':'–')+row('Zatankowano',c.l?c.l.toFixed(1)+' l':'–')+row('Paliwo',c.fc?money(c.fc):'–')
    +row('Średnie spalanie',c.l100!==null?c.l100.toFixed(2)+' l/100 km':'–')+row('Paliwo na 1 km',c.ck!==null?money(c.ck):'–')
@@ -389,11 +476,12 @@ async function deleteTrip(w){
 
 function setTheme(t,persist){
   document.documentElement.setAttribute('data-theme',t);
-  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#0a1623':'#eef3f8';
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#0F1B1C':'#F1F5F2';
+  document.querySelectorAll('.thm').forEach(b=>{b.innerHTML=t==='dark'?ICON.sun:ICON.moon});
   if(persist)try{localStorage.setItem('urbex_theme',t)}catch(e){}
 }
 {const cur=document.documentElement.getAttribute('data-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
- $('#th').checked=cur==='dark';setTheme(cur,false)}
+ setTheme(cur,false)}
 
 /* ---------- zdarzenia ---------- */
 document.addEventListener('click',e=>{
@@ -404,6 +492,12 @@ document.addEventListener('click',e=>{
   else if(a==='open'){S.cur=+b.dataset.id;S.tab='d';save();render()}
   else if(a==='back'){stopTrack();S.cur=null;save();render()}
   else if(a==='tab'){S.tab=b.dataset.t;render()}
+  else if(a==='theme')setTheme(curTheme()==='dark'?'light':'dark',true);
+  else if(a==='pin'){const el=$('#pinfo');if(!el||!w)return;const id=b.getAttribute('data-id');let t;
+    if(id==='start')t='Start: '+((w.start&&w.start.name)||'');
+    else if(id==='dest')t='Cel: '+((w.dest&&w.dest.name)||'');
+    else{const i=w.locs.findIndex(x=>String(x.id)===id),l=w.locs[i];if(!l)return;t=(i+1)+'. '+(l.name||'Bez opisu')+(l.done?' · odwiedzone '+fmt(l.done):'')}
+    el.textContent=t}
   else if(a==='mark'){const c=w.locs.find(l=>!l.done);if(c)arrive(w,c,false)}
   else if(a==='undo'||a==='prev'||a==='undoid'){
     let l;
@@ -444,7 +538,6 @@ document.addEventListener('input',e=>{
   else if(i==='wd'&&e.target.value){w.date=e.target.value;save()}
 });
 document.addEventListener('change',async e=>{
-  if(e.target.id==='th'){setTheme(e.target.checked?'dark':'light',true);return}
   if(e.target.id==='o-t'){W().tolls=e.target.checked;W().routed=false;save();render();return}
   if(e.target.id==='o-h'){W().hw=e.target.checked;W().routed=false;save();render();return}
   if(e.target.id!=='pf')return;
