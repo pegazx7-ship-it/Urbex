@@ -25,11 +25,12 @@ h2{font-size:12px;margin:22px 0 8px;color:var(--ac);text-transform:uppercase;let
 .card{background:var(--card);border-radius:18px;padding:14px;margin-bottom:10px;border:1px solid var(--bd)}
 input,textarea{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--bd);border-radius:14px;background:var(--bg);color:var(--tx);margin:4px 0 10px}
 input[type=checkbox]{width:24px}
-label{font-size:13px;color:var(--mut);font-weight:600}
+label{display:block;font-size:13px;color:var(--mut);font-weight:600}
 button,.btn{font:inherit;font-weight:800;border:0;border-radius:999px;min-height:48px;padding:10px 20px;background:var(--btn);color:var(--on);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 button.s,.btn.s{background:var(--c2);color:var(--tx)}
 .o{background:transparent!important;color:var(--line)!important;box-shadow:inset 0 0 0 1.5px var(--line)}
 .w{width:100%}
+.row.fr{align-items:flex-start}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 .sp{flex:1}
 .top{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
@@ -112,7 +113,7 @@ function costs(w){
   const lod=num(w.lodging&&w.lodging.price),oth=num(w.other),np=parseInt(w.people)||0,n=Math.max(1,np),total=fc+lod+oth;
   return{km,l,fc,l100:km&&l?l/km*100:null,ck:km&&fc?fc/km:null,lod,oth,total,n,hasPeople:np>0,fpp:fc/n,tpp:total/n};
 }
-const fe=x=>{const l=num(x.l),k=num(x.km),p=num(x.p);return money(l*p)+' · '+(k&&l?(l/k*100).toFixed(2)+' l/100 km':'– l/100 km')+(k&&l*p?' · '+money(l*p/k)+'/km':'')};
+const fe=x=>{const l=num(x.l),k=num(x.km),p=num(x.p);return `<div class="kv"><span>Koszt tankowania</span><b>${l*p?money(l*p):'–'}</b></div><div class="kv"><span>Spalanie</span><b>${k&&l?(l/k*100).toFixed(2).replace('.',',')+' l/100 km':'–'}</b></div>`};
 const lk=t=>{t=String(t||'').trim();return t?(/^https?:\/\//i.test(t)?t:'https://'+t):''};
 const ICON={
  sun:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
@@ -284,15 +285,15 @@ function viewK(w){
    <label>Liczba osób w wyjeździe</label><input id="ppl" inputmode="numeric" value="${esc(w.people||'')}" placeholder="np. 3"></div>
   <h2>Tankowania (${f.length})</h2>
   ${f.map((x,i)=>`<div class="card"><b>Tankowanie ${i+1}</b>
-   <div class="row"><div><label>Km</label><input inputmode="decimal" data-fid="${x.id}" data-ff="km" value="${esc(x.km)}"></div>
-   <div><label>Litry</label><input inputmode="decimal" data-fid="${x.id}" data-ff="l" value="${esc(x.l)}"></div>
-   <div><label>Cena zł/l</label><input inputmode="decimal" data-fid="${x.id}" data-ff="p" value="${esc(x.p)}"></div></div>
-   <div class="mut" id="fe${x.id}">${fe(x)}</div>
+   <label>Przejechane kilometry</label><input inputmode="decimal" data-fid="${x.id}" data-ff="km" value="${esc(x.km)}">
+   <div class="row fr"><div><label>Litry</label><input inputmode="decimal" data-fid="${x.id}" data-ff="l" value="${esc(x.l)}"></div>
+   <div><label>Cena za litr (zł)</label><input inputmode="decimal" data-fid="${x.id}" data-ff="p" value="${esc(x.p)}"></div></div>
+   <div id="fe${x.id}">${fe(x)}</div>
    <button class="s" style="min-height:40px;margin-top:8px" data-a="delfuel" data-id="${x.id}">Usuń</button></div>`).join('')}
   <div class="card"><b>Dodaj tankowanie</b>
-   <div class="row"><div><label>Km od poprzedniego</label><input id="fk" inputmode="decimal"></div>
-   <div><label>Litry</label><input id="fl" inputmode="decimal"></div>
-   <div><label>Cena zł/l</label><input id="fp" inputmode="decimal" value="${esc(last)}"></div></div>
+   <label>Przejechane kilometry</label><input id="fk" inputmode="decimal">
+   <div class="row fr"><div><label>Litry</label><input id="fl" inputmode="decimal"></div>
+   <div><label>Cena za litr (zł)</label><input id="fp" inputmode="decimal" value="${esc(last)}"></div></div>
    <button class="w" data-a="addfuel">+ Dodaj tankowanie</button><div id="fm" class="mut" style="margin-top:6px"></div></div>
   <h2>Nocleg i inne koszty</h2><div class="card">
    <label>Nocleg (nazwa)</label><input id="ln" value="${esc(lo.name||'')}" placeholder="np. Pensjonat pod Lasem">
@@ -308,7 +309,7 @@ function outK(w){
   const h=$('#hero');if(h)h.innerHTML=`<div class="mut">Na osobę (${c.hasPeople?c.n+' os.':'wpisz liczbę osób'})</div><div class="herobig">${money(c.tpp)}</div><div class="mut">Razem ${money(c.total)}${c.l100!==null?' · spalanie '+c.l100.toFixed(1)+' l/100 km':''}</div>`;
   const row=(a,b,big)=>`<div class="kv"><span>${a}</span>${big?`<span class="big">${b}</span>`:`<b>${b}</b>`}</div>`;
   el.innerHTML=row('Przejechane',c.km?Math.round(c.km)+' km':'–')+row('Zatankowano',c.l?c.l.toFixed(1)+' l':'–')+row('Paliwo',c.fc?money(c.fc):'–')
-   +row('Średnie spalanie',c.l100!==null?c.l100.toFixed(2)+' l/100 km':'–')+row('Paliwo na 1 km',c.ck!==null?money(c.ck):'–')
+   +row('Średnie spalanie',c.l100!==null?c.l100.toFixed(2)+' l/100 km':'–')
    +row('Nocleg',c.lod?money(c.lod):'–')+row('Inne koszty',c.oth?money(c.oth):'–')+row('Razem',money(c.total),1)
    +row('Liczba osób',c.hasPeople?c.n:'wpisz liczbę osób powyżej')+row('Paliwo na osobę',money(c.fpp))+row('Całość na osobę',money(c.tpp),1);
 }
@@ -528,7 +529,7 @@ document.addEventListener('input',e=>{
   const w=W(),i=e.target.id;if(!w)return;
   if(e.target.dataset.lid){const l=w.locs.find(x=>String(x.id)===e.target.dataset.lid);if(l){l[e.target.dataset.f]=e.target.value;save()}return}
   if(i==='rad'){S.rad=+e.target.value||150;save();return}
-  if(e.target.dataset.fid){const x=fuelOf(w).find(y=>String(y.id)===e.target.dataset.fid);if(x){x[e.target.dataset.ff]=e.target.value;save();outK(w);const el=$('#fe'+x.id);if(el)el.textContent=fe(x)}}
+  if(e.target.dataset.fid){const x=fuelOf(w).find(y=>String(y.id)===e.target.dataset.fid);if(x){x[e.target.dataset.ff]=e.target.value;save();outK(w);const el=$('#fe'+x.id);if(el)el.innerHTML=fe(x)}}
   else if(i==='car'){w.car=e.target.value;save()}
   else if(i==='ppl'){w.people=e.target.value;save();outK(w)}
   else if(i==='ln'||i==='lp'||i==='ll'){w.lodging=w.lodging||{};w.lodging[{ln:'name',lp:'price',ll:'link'}[i]]=e.target.value;save();outK(w);
