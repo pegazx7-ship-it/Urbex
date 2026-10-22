@@ -68,12 +68,12 @@ function stats(w){
 function render(){
   const w=W(),app=$('#app');
   if(!w){
-    app.innerHTML=`<h1>Urbex</h1><button class="w" data-a="new">+ Nowa wyprawa</button><h2>Wyprawy</h2>`+
+    app.innerHTML=`<h1>Urbex</h1><button class="w" data-a="new">+ Nowa wyprawa</button><button class="s w" data-a="pull" style="margin-top:8px">⬇ Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:6px"></div><h2>Wyprawy</h2>`+
     ([...S.w].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
       const s=stats(x),v=x.locs.filter(l=>l.done).length;
       return `<div class="card" data-a="open" data-id="${x.id}"><b>${esc(x.name)}</b> <span class="mut">${x.date}</span>
       <div class="mut">${v}/${x.locs.length} miejsc · ${x.pc||0} zdjęć${s.cost!==null?' · '+money(s.cost):''}${s.l100!==null?' · '+s.l100.toFixed(1)+' l/100':''}</div></div>`}).join('')
-      ||'<div class="mut">Jeszcze nie masz żadnej wyprawy. Dotknij przycisku powyżej.</div>');
+      ||'<div class="mut">Jeszcze nie masz żadnej wyprawy. Dotknij przycisku powyżej.</div>')+`<h2>Ustawienia</h2><div class="card"><label>Adres Workera (Cloudflare)</label><input id="wk" value="${esc(S.worker||'')}" placeholder="https://urbex.TWOJA-NAZWA.workers.dev" autocapitalize="off"><label>Hasło dostępu</label><input id="kk" type="password" value="${esc(S.key||'')}" autocomplete="off"><button class="s w" data-a="wk">Zapisz</button></div>`;
     return;
   }
   const tabs=[['m','📍','Miejsca'],['f','📷','Zdjęcia'],['k','⛽','Koszt']];
@@ -86,6 +86,7 @@ function viewM(w){
   const pt=p=>p?`<b>${esc(p.name)}</b> <span class="mut">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span>`:'<span class="mut">nie ustawiono</span>';
   const lg=w.routed?legs(w):[];
   $('#body').innerHTML=`
+  <h2>Chmura</h2><div class="card"><div class="row"><button data-a="push">⬆ Wyślij</button><button class="s" data-a="pull">⬇ Pobierz</button></div><div id="sy" class="mut" style="margin-top:8px"></div></div>
   <h2>1 · Start</h2><div class="card">${w.start?pt(w.start):'<span class="mut">Moja lokalizacja (pobierana przy układaniu trasy)</span>'}
    <input id="si" placeholder="Miasto lub link Google Maps" style="margin-top:10px">
    <div class="row"><button class="s" data-a="sg">📍 Moja lokalizacja</button><button data-a="ss">Ustaw start</button></div></div>
@@ -145,13 +146,23 @@ function outK(w){const s=stats(w);
 /* ---------- plan trasy ---------- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const setMsg=t=>{const m=$('#msg');if(m)m.textContent=t};
-const FAIL='Nie rozpoznano. Wklej pełny link z google.com/maps, współrzędne (np. 52.40, 16.92) albo nazwę miejscowości. Skróconych linków maps.app.goo.gl nie da się odczytać. W Google Maps przytrzymaj punkt na mapie i skopiuj współrzędne z góry ekranu.';
+const FAIL='Nie rozpoznano. Wklej pełny link z google.com/maps, współrzędne (np. 52.40, 16.92) albo nazwę miejscowości. Skrócone linki maps.app.goo.gl wymagają włączenia rozwijania linków (ekran główny, sekcja Ustawienia). Alternatywa: w Google Maps przytrzymaj punkt na mapie i skopiuj współrzędne z góry ekranu.';
+async function expand(u){
+  try{const j=await api('/expand?u='+encodeURIComponent(u));return j.url||null}catch(e){return null}
+}
+function nameFromUrl(u){try{const m=u.match(/\/maps\/place\/([^/@?]+)/);return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''}catch(e){return ''}}
 async function resolve(line){
   line=line.trim();let name='';
   if(line.includes('|')){const i=line.indexOf('|');name=line.slice(0,i).trim();line=line.slice(i+1).trim()}
   const c=parse(line);
   if(c)return{...c,name:name||c.lat.toFixed(4)+', '+c.lng.toFixed(4)};
-  if(/^https?:\/\//i.test(line))return null;
+  if(/^https?:\/\//i.test(line)){
+    let u=line;
+    if(/goo\.gl|g\.co\//.test(u)){u=await expand(u);if(!u)return null}
+    const nm=nameFromUrl(u),c2=parse(u);
+    if(c2)return{...c2,name:name||nm||c2.lat.toFixed(4)+', '+c2.lng.toFixed(4)};
+    if(!nm)return null;line=nm;
+  }
   try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(line));
     const j=await r.json();
     if(j[0])return{lat:+j[0].lat,lng:+j[0].lon,name:name||j[0].display_name.split(',').slice(0,2).join(',').trim(),geo:1}}catch(e){}
@@ -210,6 +221,37 @@ function legs(w){
   return out;
 }
 
+
+/* ---------- synchronizacja (Cloudflare Worker) ---------- */
+const syncMsg=t=>{const m=$('#sy');if(m)m.textContent=t};
+async function api(path,opt){
+  if(!S.worker||!S.key)throw new Error('Uzupełnij adres Workera i hasło w Ustawieniach (ekran główny, na dole).');
+  const r=await fetch(S.worker.replace(/\/$/,'')+path,Object.assign({},opt,{headers:{'X-Key':S.key,'Content-Type':'application/json'}}));
+  if(r.status===401)throw new Error('Złe hasło dostępu.');
+  if(!r.ok)throw new Error('Błąd Workera ('+r.status+').');
+  return r.json();
+}
+async function push(w){
+  syncMsg('Wysyłam…');
+  try{
+    w.cid=w.cid||String(w.id);
+    await api('/trip',{method:'PUT',body:JSON.stringify({id:w.cid,name:w.name,date:w.date,start:w.start||null,dest:w.dest||null,locs:w.locs})});
+    w.cloud=1;save();syncMsg('Wysłano o '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})+' ('+w.locs.length+' miejsc).');
+  }catch(e){syncMsg(e.message)}
+}
+async function pull(){
+  syncMsg('Pobieram…');
+  try{
+    const t=await api('/trip');if(!t)return syncMsg('W chmurze nie ma jeszcze trasy.');
+    let w=S.w.find(x=>x.cid===t.id);
+    if(!w){w={id:Date.now(),cid:t.id,locs:[],pc:0};S.w.push(w)}
+    const dn=new Map(w.locs.filter(l=>l.done).map(l=>[l.id,l.done]));
+    Object.assign(w,{name:t.name,date:t.date,start:t.start,dest:t.dest,cloud:1,routed:false});
+    w.locs=(t.locs||[]).map(l=>Object.assign({},l,{done:l.done||dn.get(l.id)||null}));
+    S.cur=w.id;S.tab='m';save();render();
+  }catch(e){syncMsg(e.message)}
+}
+
 /* ---------- lokalizacje ---------- */
 function parse(line){
   const pats=[/@(-?\d+\.\d+),(-?\d+\.\d+)/,/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,/[?&](?:q|query|ll|destination|center)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/,/(-?\d{1,3}\.\d+)[,;\s]+(-?\d{1,3}\.\d+)/];
@@ -249,6 +291,9 @@ document.addEventListener('click',e=>{
   else if(a==='track')track();
   else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);w.routed=false;save();render()}
   else if(a==='delw'){if(confirm('Usunąć wyprawę razem z listą miejsc? Zdjęcia zostaną w pamięci telefonu.')){stopTrack();S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render()}}
+  else if(a==='push')push(w);
+  else if(a==='pull')pull();
+  else if(a==='wk'){S.worker=$('#wk').value.trim();S.key=$('#kk').value;save();alert('Zapisano')}
   else if(a==='add')addPlaces();
   else if(a==='sg')setStartGPS();
   else if(a==='ss')setPoint('start','#si');
