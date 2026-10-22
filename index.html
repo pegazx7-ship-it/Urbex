@@ -93,11 +93,11 @@ function render(){
   <div class="bar">${tabs.map(t=>`<button data-a="tab" data-t="${t[0]}" class="${S.tab===t[0]?'on':''}"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div>`;
   ({d:viewDrive,f:viewF,k:viewK})[S.tab](w);
 }
+const short=(t,n=40)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t?(t.length>n?t.slice(0,n)+'…':t):'Bez opisu'};
 const pt=p=>p?`<b>${esc(p.name)}</b> <span class="mut">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span>`:'<span class="mut">nie ustawiono</span>';
-const fields=l=>`<label>Tytuł</label><input data-lid="${l.id}" data-f="name" value="${esc(l.name||'')}" placeholder="np. Stara fabryka">
-  <label>Opis</label><textarea rows="2" data-lid="${l.id}" data-f="note" placeholder="Co to za miejsce, uwagi, dojazd…">${esc(l.note||'')}</textarea>`;
-const mapLinks=l=>`<a class="btn s" href="${gm(l)}" target="_blank" rel="noopener">Mapa</a>
-  <a class="btn s" href="https://www.google.com/maps/@?api=1&map_action=map&center=${l.lat},${l.lng}&zoom=18&basemap=satellite" target="_blank" rel="noopener">Satelita</a>`;
+const linkRow=l=>`<label>Link</label><div style="margin:4px 0 10px"><a href="${gm(l)}" target="_blank" rel="noopener" style="color:var(--ac);word-break:break-all">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)} ↗</a></div>`;
+const fields=l=>`<label>Trasa</label><textarea rows="2" data-lid="${l.id}" data-f="name" placeholder="Co to za miejsce, np. Stara fabryka, wejście od tyłu">${esc(l.name||'')}</textarea>${linkRow(l)}`;
+const mapLinks=l=>`<a class="btn s" href="https://www.google.com/maps/@?api=1&map_action=map&center=${l.lat},${l.lng}&zoom=18&basemap=satellite" target="_blank" rel="noopener">Satelita</a>`;
 function nextUrl(w){
   const stops=w.locs.filter(l=>!l.done).concat(w.dest?[w.dest]:[]);
   if(!stops.length)return null;
@@ -117,10 +117,10 @@ function viewPlan(w){
   <h2>2 · Cel podróży</h2><div class="card">${pt(w.dest)}
    <input id="di" placeholder="Miasto lub link Google Maps" style="margin-top:10px"><button class="w" data-a="ds">Ustaw cel</button></div>
   <h2>3 · Miejsca urbexu (${todo.length})</h2><div class="card">
-   <label>Wklej link z Google Maps, współrzędne lub nazwę miejscowości. Kilka naraz, każde w osobnej linii. Opcjonalnie „Tytuł | link”.</label>
+   <label>Wklej link z Google Maps, współrzędne lub nazwę miejscowości. Kilka naraz, każde w osobnej linii. Opcjonalnie „Co to za miejsce | link”.</label>
    <textarea id="paste" rows="3" placeholder="Stara fabryka | https://www.google.com/maps/@52.40,16.92,17z"></textarea>
    <button class="w" data-a="add">+ Dodaj do listy</button><div id="msg" class="mut" style="margin-top:8px"></div></div>
-  ${todo.map((l,i)=>`<div class="card"><b>${i+1}.</b> <span class="mut">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}</span>${fields(l)}
+  ${todo.map((l,i)=>`<div class="card"><b>${i+1}.</b>${fields(l)}
    <div class="row">${mapLinks(l)}<button class="s" data-a="dl" data-id="${l.id}">Usuń</button></div></div>`).join('')}
   ${todo.length?`<h2>4 · Trasa</h2><div class="card">
    <label style="display:flex;gap:10px;align-items:center;font-size:16px;color:var(--tx)"><input type="checkbox" id="o-t" style="width:24px;margin:0" ${w.tolls!==false?'checked':''}>Unikaj płatnych dróg</label>
@@ -137,27 +137,28 @@ function viewDrive(w){
   const al=w.arrived&&w.locs.find(x=>x.id===w.arrived.id),url=nextUrl(w);
   let main;
   if(al){
-    const nm=c?c.name||'następne miejsce':(w.dest?'cel: '+w.dest.name:'');
-    main=`<div class="card ok"><div class="mut">${w.arrived.auto?'Jesteś na miejscu':'Dotarłem'} · ${fmt(w.arrived.t)}</div><div class="big">✓ ${esc(al.name||'Bez tytułu')}</div>
-     <label>Opis / notatka z tego miejsca</label><textarea rows="2" data-lid="${al.id}" data-f="note">${esc(al.note||'')}</textarea></div>
+    const nm=c?short(c.name):(w.dest?'cel: '+w.dest.name:'');
+    main=`<div class="card ok"><div class="mut">${w.arrived.auto?'Jesteś na miejscu':'Dotarłem'} · ${fmt(w.arrived.t)}</div><div class="big">✓ ${esc(short(al.name,60))}</div>
+     <label>Notatka z tego miejsca</label><textarea rows="2" data-lid="${al.id}" data-f="note">${esc(al.note||'')}</textarea></div>
      ${url?`<a class="btn go" data-a="go" href="${url}" target="_blank" rel="noopener">Jedziemy dalej › ${esc(nm)}</a>
      <div class="mut" style="margin-top:6px">Otworzy Google Maps z trasą przez pozostałe miejsca${w.dest?' do celu':''}.</div>`
-     :`<div class="card">Koniec trasy ✓</div><button class="s w" data-a="go">Zamknij</button>`}`;
+     :`<div class="card">Koniec trasy ✓</div><button class="s w" data-a="go">Zamknij</button>`}
+     <button class="s w" style="margin-top:10px" data-a="undo">↩ Cofnij „Dotarłem”</button>`;
   }else if(c){
     main=`<div class="card now"><div class="mut">Następny cel · ${done.length+1} z ${w.locs.length}</div>
-     <label>Tytuł</label><input class="bigin" data-lid="${c.id}" data-f="name" value="${esc(c.name||'')}">
-     <label>Opis</label><textarea rows="2" data-lid="${c.id}" data-f="note" placeholder="Opisz miejsce, do którego jedziesz">${esc(c.note||'')}</textarea>
-     <div class="mut">${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
+     <label>Trasa</label><textarea class="bigin" rows="2" data-lid="${c.id}" data-f="name" placeholder="Co to za miejsce, np. Stara fabryka, wejście od tyłu">${esc(c.name||'')}</textarea>
+     ${linkRow(c)}
      <div class="row" style="margin-top:8px">${mapLinks(c)}</div>
      <button class="go" data-a="mark">Dotarłem</button>
+     ${done.length?'<button class="s w" style="margin-top:8px" data-a="prev">← Poprzednie miejsce</button>':''}
      <a class="btn s w" style="margin-top:8px" href="${url}" target="_blank" rel="noopener">Nawiguj w Google Maps</a></div>`;
   }else{
     main=`<div class="card">${w.locs.length?'Wszystkie miejsca odwiedzone ✓':'Brak miejsc. Pobierz trasę z chmury.'}${w.dest?`<div class="mut" style="margin-top:6px">Cel podróży: ${esc(w.dest.name)}</div>`:''}</div>
      ${url?`<a class="btn go" href="${url}" target="_blank" rel="noopener">Jedź do celu</a>`:''}`;
   }
   $('#body').innerHTML=main+`
-  ${todo.length>1?`<h2>Dalej (${todo.length-1})</h2>`+todo.slice(1).map((l,i)=>`<div class="card"><b>${done.length+i+2}.</b> <span class="mut">${l.lat.toFixed(4)}, ${l.lng.toFixed(4)}</span>${fields(l)}<div class="row">${mapLinks(l)}</div></div>`).join(''):''}
-  <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(l.name||'Bez tytułu')}</b><div class="mut">${fmt(l.done)}</div>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}</div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
+  ${todo.length>1?`<h2>Dalej (${todo.length-1})</h2>`+todo.slice(1).map((l,i)=>`<div class="card"><b>${done.length+i+2}.</b>${fields(l)}<div class="row">${mapLinks(l)}</div></div>`).join(''):''}
+  <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(short(l.name,60))}</b><div class="mut">${fmt(l.done)}</div>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}<button class="s" style="margin-top:8px;min-height:40px" data-a="undoid" data-id="${l.id}">↩ Cofnij</button></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
   <h2>Chmura</h2><div class="card"><button class="s w" data-a="pull">⬇ Pobierz trasę z chmury</button><div id="sy" class="mut" style="margin-top:8px"></div></div>
   <details><summary>Więcej opcji</summary><div class="card"><label>Promień wykrycia dojazdu (m)</label><input id="rad" type="number" inputmode="numeric" value="${S.rad||150}">
    <label>Dodaj miejsce (link, współrzędne lub nazwa)</label><textarea id="paste" rows="2"></textarea><button class="s w" data-a="add">+ Dodaj</button><div id="msg" class="mut" style="margin-top:6px"></div></div></details>`;
@@ -274,7 +275,7 @@ function legs(w){
 const syncMsg=t=>{const m=$('#sy');if(m)m.textContent=t};
 async function api(path,opt){
   if(!S.worker||!S.key)throw new Error('Uzupełnij adres Workera i hasło w Ustawieniach (ekran główny, na dole).');
-  const r=await fetch(S.worker.replace(/\/$/,'')+path,Object.assign({},opt,{headers:{'X-Key':S.key,'Content-Type':'application/json'}}));
+  const r=await fetch((/^https?:\/\//i.test(S.worker)?S.worker:'https://'+S.worker).replace(/\/+$/,'')+path,Object.assign({},opt,{headers:{'X-Key':S.key,'Content-Type':'application/json'}}));
   if(r.status===401)throw new Error('Złe hasło dostępu.');
   if(!r.ok)throw new Error('Błąd Workera ('+r.status+').');
   return r.json();
@@ -322,12 +323,19 @@ document.addEventListener('click',e=>{
   else if(a==='back'){stopTrack();S.cur=null;save();render()}
   else if(a==='tab'){S.tab=b.dataset.t;render()}
   else if(a==='mark'){const c=w.locs.find(l=>!l.done);if(c)arrive(w,c,false)}
+  else if(a==='undo'||a==='prev'||a==='undoid'){
+    let l;
+    if(a==='undoid')l=w.locs.find(x=>String(x.id)===b.dataset.id);
+    else if(a==='undo')l=w.arrived&&w.locs.find(x=>x.id===w.arrived.id);
+    else l=w.locs.filter(x=>x.done).sort((p,q)=>q.done-p.done)[0];
+    if(l){l.done=null;if(w.arrived&&w.arrived.id===l.id)w.arrived=null;save();render()}
+  }
   else if(a==='go'){w.arrived=null;save();setTimeout(render,400)}
   else if(a==='dl'){w.locs=w.locs.filter(l=>String(l.id)!==b.dataset.id);w.routed=false;save();render()}
   else if(a==='delw'){if(confirm('Usunąć wyprawę razem z listą miejsc? Zdjęcia zostaną w pamięci telefonu.')){stopTrack();S.w=S.w.filter(x=>x.id!==w.id);S.cur=null;save();render()}}
   else if(a==='push')push(w);
   else if(a==='pull')pull();
-  else if(a==='wk'){S.worker=$('#wk').value.trim();S.key=$('#kk').value;save();alert('Zapisano')}
+  else if(a==='wk'){let wk=$('#wk').value.trim().replace(/\/+$/,'');if(wk&&!/^https?:\/\//i.test(wk))wk='https://'+wk;S.worker=wk;S.key=$('#kk').value;save();alert('Zapisano')}
   else if(a==='add')addPlaces();
   else if(a==='sg')setStartGPS();
   else if(a==='ss')setPoint('start','#si');
