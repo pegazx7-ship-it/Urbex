@@ -103,6 +103,9 @@ select{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--bd);bord
 @keyframes finIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 @keyframes finFall{to{transform:translateY(110vh) rotate(540deg)}}
 @media(prefers-reduced-motion:reduce){.fin i{display:none}.fin-t,.fin-ring circle,.fin-ring path{animation:none;stroke-dashoffset:0}}
+.ph{position:relative;aspect-ratio:1;background:var(--c2);border-radius:12px;overflow:hidden}.ph img{display:block;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;font-size:0;color:transparent;border-radius:0}
+.ph .bd{position:absolute;right:6px;top:6px;background:#000b;color:#fff;border-radius:10px;font-size:11px;padding:2px 7px;font-weight:700}
+.lbt{color:#fff;text-align:center;font-size:13px;min-height:18px}.lb img{touch-action:pan-y}
 </style>
 </head>
 <body>
@@ -123,8 +126,8 @@ let gpsMsg='Śledzenie wyłączone. Działa przy włączonym ekranie.',wid=null;
 
 /* ---------- IndexedDB (zdjęcia) ---------- */
 let db=null;
-const openDB=()=>new Promise(res=>{try{const r=indexedDB.open('urbex_v2',1);
-  r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id',autoIncrement:true});
+const openDB=()=>new Promise(res=>{try{const r=indexedDB.open('urbex_v2',2);
+  r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p',{keyPath:'id',autoIncrement:true});if(!d.objectStoreNames.contains('t'))d.createObjectStore('t',{keyPath:'fid'})};
   r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}});
 const st=m=>db.transaction('p',m).objectStore('p');
 const photos=async id=>{db=db||await openDB();if(!db)return[];
@@ -152,7 +155,7 @@ function costs(w){
 }
 const fe=(x,k)=>{const l=num(x.l),p=num(x.p);k=k||{};return `<div class="kv"><span>Koszt tankowania</span><b>${l*p?money(l*p):'–'}</b></div><div class="kv"><span>Spalanie</span><b>${k.km&&l?(l/k.km*100).toFixed(2).replace('.',',')+' l/100 km':'–'}</b></div><div class="kv"><span>Przejechane kilometry</span><b>${k.km?Math.round(k.km)+' km':(k.bad?'przebieg niższy niż poprzedni':'–')}</b></div>`};
 function migrate(w){
-  fuelOf(w);w.exp=w.exp||[];
+  fuelOf(w);w.exp=w.exp||[];w.pics=w.pics||[];
   if(num(w.other)>0&&!w.exp.some(e=>e.id===1)){w.exp.push({id:1,desc:'Inne koszty',amt:String(w.other),who:null});w.other=''}
   if(!w.names&&parseInt(w.people)>0)w.names=Array.from({length:Math.min(12,parseInt(w.people))},(_,i)=>({i:'p'+(i+1),n:'Osoba '+(i+1)}));
 }
@@ -242,7 +245,7 @@ function render(){
     ([...S.w].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
       const s=costs(x),v=x.locs.filter(l=>l.done).length;
       return `<div class="card" data-a="open" data-id="${x.id}"><b>${esc(x.name)}</b> <span class="mut">${x.date}</span>
-      <div class="mut">${v}/${x.locs.length} miejsc · ${x.pc||0} zdjęć${s.total>0?' · '+money(s.total)+(s.hasPeople?' ('+money(s.tpp)+'/os.)':''):''}${s.l100!==null?' · '+s.l100.toFixed(1)+' l/100':''}</div></div>`}).join('')
+      <div class="mut">${v}/${x.locs.length} miejsc · ${(x.pics||[]).length+(x.pc||0)} zdjęć${s.total>0?' · '+money(s.total)+(s.hasPeople?' ('+money(s.tpp)+'/os.)':''):''}${s.l100!==null?' · '+s.l100.toFixed(1)+' l/100':''}</div></div>`}).join('')
       ||'<div class="mut">Jeszcze nie masz żadnej wyprawy. Dotknij przycisku powyżej.</div>')+`<h2>Ustawienia</h2><div class="card"><label>Adres Workera (Cloudflare)</label><input id="wk" value="${esc(S.worker||'')}" placeholder="https://urbex.TWOJA-NAZWA.workers.dev" autocapitalize="off"><label>Hasło dostępu</label><input id="kk" type="password" value="${esc(S.key||'')}" autocomplete="off"><button class="s w" data-a="wk">Zapisz</button></div>`;
     return;
   }
@@ -306,7 +309,8 @@ function viewPlan(w){
   <h2>5 · Udostępnij i synchronizuj</h2><div class="card"><button class="w" data-a="push">${w.cid?'Synchronizuj teraz':'Wyślij wyprawę do chmury'}</button><div class="mut" style="margin-top:8px">Zmiany z każdego urządzenia zapisują się same i trafiają do pozostałych w ciągu kilkunastu sekund.</div><div id="sy" class="mut" style="margin-top:8px">${esc(synTxt)}</div></div>
   <h2>Wyprawa</h2><div class="card"><div class="row"><div><label>Nazwa</label><input id="wn" value="${esc(w.name)}"></div><div><label>Data</label><input id="wd" type="date" value="${w.date}"></div></div>
    <button class="s w" data-a="delw">Usuń całą wyprawę</button></div>`;
-  $('#body').innerHTML=`<div class="cols"><div>${left}</div><div>${right}</div></div>`;
+  $('#body').innerHTML=`<div class="cols"><div>${left}</div><div>${right}<h2>Zdjęcia</h2><div id="phw"></div></div></div>`;
+  mountPhotos(w);pumpUp(w);
 }
 function viewDrive(w){
   const todo=w.locs.filter(l=>!l.done),done=w.locs.filter(l=>l.done).sort((a,b)=>b.done-a.done),c=todo[0];
@@ -353,18 +357,132 @@ function viewDrive(w){
    <label>Dodaj miejsce (link, współrzędne lub nazwa)</label><textarea id="paste" rows="2"></textarea><button class="s w" data-a="add">+ Dodaj</button><div id="msg" class="mut" style="margin-top:6px"></div></div>
   <div class="card"><button class="s w" data-a="delw">Usuń tę wyprawę z telefonu</button><div class="mut" style="margin-top:6px">Usuwa też zdjęcia tej wyprawy zapisane w telefonie.</div></div></details></div>`;
 }
-async function viewF(w){
-  $('#body').innerHTML=`<h2>Zdjęcia — ${w.date}</h2><label class="btn w" style="display:flex">Dodaj zdjęcia<input id="pf" type="file" accept="image/*" multiple hidden></label>
-  <div class="mut" style="margin:8px 0 12px">Zapisane w telefonie. Wysyłka na Dysk Google dojdzie w kolejnym etapie.</div><div class="grid" id="gr"></div>`;
-  const ps=await photos(w.id),g=$('#gr');if(!g)return;
-  if(!ps.length)g.outerHTML='<div class="mut">Brak zdjęć w tej wyprawie.</div>';
-  ps.forEach(p=>{const im=document.createElement('img');im.src=URL.createObjectURL(p.blob);im.onclick=()=>viewer(p,im.src);g.appendChild(im)});
+/* ---------- zdjęcia: Telegram przez Workera ---------- */
+const wurl=()=>(/^https?:\/\//i.test(S.worker)?S.worker:'https://'+S.worker).replace(/\/+$/,'');
+async function wfetch(path,opt){
+  if(!S.worker||!S.key)throw new Error('Uzupełnij adres Workera i hasło w Ustawieniach.');
+  const o=Object.assign({},opt);o.headers=Object.assign({'X-Key':S.key},opt&&opt.headers);
+  const r=await fetch(wurl()+path,o);
+  if(r.status===401)throw new Error('Złe hasło dostępu.');
+  if(!r.ok){let m='';try{m=(await r.json()).error||''}catch(e){}throw new Error(m||'Błąd Workera ('+r.status+').')}
+  return r;
 }
-function viewer(p,src){
-  const o=document.createElement('div');o.className='ov';
-  o.innerHTML=`<img src="${src}"><div class="row"><button class="s" id="cl">Zamknij</button><button id="rm">Usuń</button></div>`;
-  document.body.appendChild(o);$('#cl').onclick=()=>o.remove();
-  $('#rm').onclick=()=>{if(confirm('Usunąć to zdjęcie?')){st('readwrite').delete(p.id).onsuccess=()=>{const w=W();w.pc=Math.max(0,(w.pc||1)-1);save();o.remove();viewF(w)}}};
+const dbReq=(mk)=>new Promise(r=>{try{const q=mk();q.onsuccess=()=>r(q.result===undefined?true:q.result);q.onerror=()=>r(null)}catch(e){r(null)}});
+const putP=async rec=>{db=db||await openDB();return db?dbReq(()=>st('readwrite').put(rec)):null};
+const delP=async id=>{db=db||await openDB();return db?dbReq(()=>st('readwrite').delete(id)):null};
+const newPid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const memU=new Map(),locU=new Map();
+const locURL=p=>{if(!locU.has(p.id))locU.set(p.id,URL.createObjectURL(p.blob));return locU.get(p.id)};
+async function picURL(fid,full){
+  const k=(full?'f:':'t:')+fid;if(memU.has(k))return memU.get(k);
+  db=db||await openDB();
+  if(!full&&db){const b=await dbReq(()=>db.transaction('t','readonly').objectStore('t').get(fid));if(b&&b!==true&&b.blob){const u=URL.createObjectURL(b.blob);memU.set(k,u);return u}}
+  const b=await (await wfetch('/file/'+fid)).blob(),u=URL.createObjectURL(b);
+  if(!full&&db)dbReq(()=>db.transaction('t','readwrite').objectStore('t').put({fid,blob:b}));
+  memU.set(k,u);return u;
+}
+const mmdd=d=>{const m=/^\d{4}-(\d\d)-(\d\d)/.exec(d||'');return m?m[2]+'.'+m[1]:''};
+const topicName=w=>((mmdd(w.date)+' '+(w.name||'Urbex')).trim()).slice(0,100);
+const capOf=w=>'#'+String((w.date||'')+'_'+(w.name||'Urbex')).replace(/[^\p{L}\p{N}]+/gu,'_').replace(/^_+|_+$/g,'');
+const topicFail={};
+async function ensureTopic(w){
+  if(w.tid)return w.tid;
+  if(topicFail[w.id])return null;
+  if(w.cid){try{await syncTrip(w)}catch(e){}if(w.tid)return w.tid}
+  try{const r=await (await wfetch('/topic',{method:'POST',body:JSON.stringify({name:topicName(w)})})).json();if(r.tid){w.tid=r.tid;save();return w.tid}}catch(e){}
+  topicFail[w.id]=1;return null;
+}
+async function prep(b){
+  if(!window.createImageBitmap)return b;
+  try{const bm=await createImageBitmap(b),m=Math.max(bm.width,bm.height);
+    if(b.size<=9e6&&m<=5000&&!/hei[cf]/i.test(b.type)){if(bm.close)bm.close();return b}
+    const k=Math.min(1,4096/m),c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);
+    c.getContext('2d').drawImage(bm,0,0,c.width,c.height);if(bm.close)bm.close();
+    return await new Promise(r=>c.toBlob(r,'image/jpeg',.92))||b;
+  }catch(e){return b}
+}
+let upBusy=false,upT=null,upMsg='',phTok=0;
+async function pumpUp(w){
+  if(upBusy||!w||!S.worker||!S.key||navigator.onLine===false)return;
+  db=db||await openDB();if(!db)return;
+  upBusy=true;
+  try{
+    for(;;){
+      const q=(await photos(w.id)).filter(p=>!p.give).sort((a,b)=>a.t-b.t);
+      if(!q.length){upMsg='';break}
+      const p=q[0];upMsg='wysyłam…';paintPh();
+      try{
+        const tid=await ensureTopic(w),b=await prep(p.blob);
+        const r=await (await wfetch('/photo?cap='+encodeURIComponent(capOf(w))+(tid?'&tid='+tid:''),{method:'POST',headers:{'Content-Type':b.type||'image/jpeg'},body:b})).json();
+        if(!r.fid)throw new Error('zła odpowiedź Workera');
+        const pid=p.pid||newPid();
+        if(!(w.pics=w.pics||[]).some(x=>x.id===pid))w.pics.push({id:pid,fid:r.fid,th:r.th||r.fid,t:p.t});
+        await delP(p.id);w.pc=Math.max(0,(w.pc||1)-1);save();paintPh();
+      }catch(e){
+        p.tries=(p.tries||0)+1;p.err=e.message;if(p.tries>=4)p.give=1;await putP(p);
+        upMsg='błąd: '+e.message;
+        if(!p.give){clearTimeout(upT);upT=setTimeout(()=>pumpUp(W()),15000*p.tries)}
+        break;
+      }
+    }
+  }finally{upBusy=false;paintPh()}
+}
+async function retryPh(w){for(const p of await photos(w.id)){p.give=0;p.tries=0;await putP(p)}upMsg='';pumpUp(w)}
+function paintPh(){const w=W();if(w&&$('#phw'))mountPhotos(w)}
+async function mountPhotos(w){
+  const el=$('#phw');if(!el)return;const tok=++phTok;migrate(w);
+  const loc=await photos(w.id);if(tok!==phTok||!$('#phw'))return;
+  const items=[...w.pics.map(p=>({k:'s',t:p.t||0,p})),...loc.map(p=>({k:'l',t:p.t||0,p}))].sort((a,b)=>a.t-b.t);
+  const nq=loc.filter(p=>!p.give).length,ng=loc.filter(p=>p.give).length,cfg=S.worker&&S.key;
+  const stat=cfg?`Telegram: ${w.pics.length} wysłanych${nq?' · '+nq+' w kolejce':''}${ng?' · '+ng+' z błędem':''}${upMsg&&(nq||ng)?' · '+esc(upMsg):''}`
+   :'Wpisz adres Workera i hasło w Ustawieniach (ekran główny), aby wysyłać zdjęcia do Telegrama. Na razie są tylko w telefonie.';
+  el.innerHTML=`<label class="btn w" style="display:flex">Dodaj zdjęcia<input id="pf" type="file" accept="image/*" multiple hidden></label>
+   <div class="mut" id="phs" style="margin:8px 0 12px">${stat}</div>${ng?'<button class="s w" style="margin-bottom:10px" data-a="phretry">Ponów wysyłkę</button>':''}
+   ${items.length?'<div class="grid" id="gr"></div>':'<div class="mut">Brak zdjęć w tej wyprawie.</div>'}`;
+  const g=$('#gr');if(!g)return;const todo=[];
+  items.forEach((it,i)=>{const d=document.createElement('div');d.className='ph';const im=document.createElement('img');im.alt='Zdjęcie '+(i+1);im.loading='lazy';
+    if(it.k==='l'){im.src=locURL(it.p);d.innerHTML='<span class="bd">'+(it.p.give?'⚠':'⏳')+'</span>'}
+    else todo.push([im,it.p.th]);
+    d.insertBefore(im,d.firstChild);im.onclick=()=>openViewer(w,items,i);g.appendChild(d)});
+  let n=0;await Promise.all([0,1,2,3].map(async()=>{while(n<todo.length){const [im,f]=todo[n++];try{im.src=await picURL(f,false)}catch(e){im.classList.add('bad')}}}));
+}
+async function shareBlob(blob,name){
+  const f=new File([blob],name,{type:blob.type||'image/jpeg'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return}catch(e){if(e.name==='AbortError')return}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+}
+function openViewer(w,items,i){
+  const o=document.createElement('div');o.className='ov lb';o.setAttribute('role','dialog');o.setAttribute('aria-label','Podgląd zdjęcia');
+  o.innerHTML=`<div class="lbt" id="lbc"></div><img id="lbi" alt=""><div class="row"><button class="s" id="lb-p" aria-label="Poprzednie zdjęcie">‹ Wstecz</button><button class="s" id="lb-n" aria-label="Następne zdjęcie">Dalej ›</button></div><div class="row"><button class="s" id="cl">Zamknij</button><button class="s" id="lb-s">Zapisz / Udostępnij</button><button id="rm">Usuń</button></div>`;
+  document.body.appendChild(o);
+  let cur=i,gen=0;
+  const q=s=>o.querySelector(s);
+  const show=async n=>{
+    if(!items.length){close();return}
+    cur=(n+items.length)%items.length;const it=items[cur],g=++gen,im=q('#lbi');
+    q('#lbc').textContent=(cur+1)+' / '+items.length;
+    if(it.k==='l'){im.src=locURL(it.p);return}
+    try{const u=await picURL(it.p.th,false);if(g===gen)im.src=u}catch(e){}
+    try{const u=await picURL(it.p.fid,true);if(g===gen)im.src=u}catch(e){if(g===gen)q('#lbc').textContent+=' · nie udało się pobrać pełnego zdjęcia'}
+  };
+  const key=e=>{if(e.key==='ArrowLeft')show(cur-1);else if(e.key==='ArrowRight')show(cur+1);else if(e.key==='Escape')close()};
+  const close=()=>{document.removeEventListener('keydown',key);o.remove()};
+  document.addEventListener('keydown',key);
+  let x0=null;o.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+  o.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>60)show(cur+(dx<0?1:-1))},{passive:true});
+  q('#cl').onclick=close;q('#lb-p').onclick=()=>show(cur-1);q('#lb-n').onclick=()=>show(cur+1);
+  q('#lb-s').onclick=async()=>{const it=items[cur];try{
+    const b=it.k==='l'?it.p.blob:await (await fetch(await picURL(it.p.fid,true))).blob();
+    await shareBlob(b,'urbex_'+(w.date||'')+'_'+(cur+1)+'.jpg')}catch(e){alert('Nie udało się zapisać zdjęcia: '+e.message)}};
+  q('#rm').onclick=async()=>{const it=items[cur];
+    if(!confirm(it.k==='s'?'Usunąć to zdjęcie z wyprawy? Zniknie z aplikacji u wszystkich, ale zostanie w grupie na Telegramie.':'Usunąć to zdjęcie z telefonu?'))return;
+    if(it.k==='s')w.pics=w.pics.filter(p=>p.id!==it.p.id);else{await delP(it.p.id);w.pc=Math.max(0,(w.pc||1)-1)}
+    save();items.splice(cur,1);mountPhotos(w);if(!items.length)close();else show(cur)};
+  show(cur);
+}
+function viewF(w){
+  $('#body').innerHTML=`<h2>Zdjęcia — ${esc(w.date)}</h2><div id="phw"></div>`;
+  mountPhotos(w);pumpUp(w);
 }
 const whoSel=(attrs,sel,w)=>`<select ${attrs}><option value="">— kto zapłacił —</option>${(w.names||[]).map(p=>`<option value="${esc(p.i)}"${sel===p.i?' selected':''}>${esc(p.n)}</option>`).join('')}</select>`;
 function viewK(w){
@@ -550,17 +668,18 @@ function mergeMap(a,b){
 }
 function mergeDoc(a,b){
   a=a||{};b=b||{};
-  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel),exp:mergeMap(a.exp,b.exp)};
+  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel),exp:mergeMap(a.exp,b.exp),pic:mergeMap(a.pic,b.pic)};
   const del=Math.max(a.deleted||0,b.deleted||0);if(del)o.deleted=del;
   return o;
 }
 const stripU=d=>{const o={...d};delete o.updated;return o};
 /* --- koniec wspólnej logiki --- */
 
-const META=['name','date','start','dest','car','people','lodN','lodP','lodL','lodW','other','tolls','hw','odo0','odo1','odoAsk','names','endAt','homeAt'];
+const META=['name','date','start','dest','car','people','lodN','lodP','lodL','lodW','other','tolls','hw','odo0','odo1','odoAsk','names','endAt','homeAt','tid'];
 const LOCF=['name','lat','lng','note','done','ord','src'];
 const FUELF=['km','odo','who','l','p','t'];
 const EXPF=['desc','amt','who'];
+const PICF=['fid','th','t'];
 const nv=v=>v===undefined?null:v;
 const J=JSON.stringify;
 let syncing=0,pend=0,syncT=null,cloudList=[],synTxt='';
@@ -568,18 +687,19 @@ function fixOrd(w){let prev=0,bad=false;w.locs.forEach(l=>{if(bad||l.ord==null||
 function norm(w,noFix){
   if(!noFix)fixOrd(w);
   const lo=w.lodging||{};
-  const m={name:nv(w.name),date:nv(w.date),start:nv(w.start),dest:nv(w.dest),car:nv(w.car),people:nv(w.people),lodN:nv(lo.name),lodP:nv(lo.price),lodL:nv(lo.link),lodW:nv(w.lodW),other:nv(w.other),tolls:w.tolls!==false,hw:!!w.hw,odo0:nv(w.odo0),odo1:nv(w.odo1),odoAsk:nv(w.odoAsk),names:nv(w.names),endAt:nv(w.endAt),homeAt:nv(w.homeAt)};
-  const L={},F={},E={};
+  const m={name:nv(w.name),date:nv(w.date),start:nv(w.start),dest:nv(w.dest),car:nv(w.car),people:nv(w.people),lodN:nv(lo.name),lodP:nv(lo.price),lodL:nv(lo.link),lodW:nv(w.lodW),other:nv(w.other),tolls:w.tolls!==false,hw:!!w.hw,odo0:nv(w.odo0),odo1:nv(w.odo1),odoAsk:nv(w.odoAsk),names:nv(w.names),endAt:nv(w.endAt),homeAt:nv(w.homeAt),tid:nv(w.tid)};
+  const L={},F={},E={},P={};
   w.locs.forEach(l=>{L[l.id]={name:nv(l.name),lat:nv(l.lat),lng:nv(l.lng),note:nv(l.note),done:l.done||null,ord:nv(l.ord),src:nv(l.src)}});
   fuelOf(w).forEach(x=>{F[x.id]={km:nv(x.km),odo:nv(x.odo),who:nv(x.who),l:nv(x.l),p:nv(x.p),t:nv(x.t)}});
   (w.exp=w.exp||[]).forEach(x=>{E[x.id]={desc:nv(x.desc),amt:nv(x.amt),who:nv(x.who)}});
-  return{m,L,F,E};
+  (w.pics=w.pics||[]).forEach(x=>{P[x.id]={fid:nv(x.fid),th:nv(x.th),t:nv(x.t)}});
+  return{m,L,F,E,P};
 }
 function stamp(w){
-  const n=norm(w),now=Date.now(),t=w._t=w._t||{m:{},l:{},f:{},dl:{},df:{},e:{},de:{}},v=w._v||{m:{},L:{},F:{},E:{}};let ch=false;
-  t.e=t.e||{};t.de=t.de||{};
+  const n=norm(w),now=Date.now(),t=w._t=w._t||{m:{},l:{},f:{},dl:{},df:{},e:{},de:{},p:{},dp:{}},v=w._v||{m:{},L:{},F:{},E:{},P:{}};let ch=false;
+  t.e=t.e||{};t.de=t.de||{};t.p=t.p||{};t.dp=t.dp||{};
   META.forEach(f=>{if(J(n.m[f])!==J(v.m[f])){t.m[f]=now;ch=true}});
-  for(const [kind,fl,tk,dk] of [['L',LOCF,'l','dl'],['F',FUELF,'f','df'],['E',EXPF,'e','de']]){
+  for(const [kind,fl,tk,dk] of [['L',LOCF,'l','dl'],['F',FUELF,'f','df'],['E',EXPF,'e','de'],['P',PICF,'p','dp']]){
     const old=v[kind]||{};
     for(const id in n[kind]){const o=n[kind][id],p=old[id];
       for(const f of fl)if(!p||J(o[f])!==J(p[f])){(t[tk][id]=t[tk][id]||{})[f]=now;ch=true}}
@@ -588,13 +708,15 @@ function stamp(w){
   w._v=n;if(ch){w._dirty=1;w._dv=(w._dv||0)+1}
 }
 function docOf(w){
-  stamp(w);const n=w._v,t=w._t,d={id:w.cid,v:2,meta:{f:{...n.m},t:{...t.m}},locs:{},fuel:{},exp:{}};
+  stamp(w);const n=w._v,t=w._t,d={id:w.cid,v:2,meta:{f:{...n.m},t:{...t.m}},locs:{},fuel:{},exp:{},pic:{}};
   for(const id in n.L)d.locs[id]={f:{...n.L[id]},t:{...(t.l[id]||{})}};
   for(const id in t.dl)d.locs[id]={d:t.dl[id]};
   for(const id in n.F)d.fuel[id]={f:{...n.F[id]},t:{...(t.f[id]||{})}};
   for(const id in t.df)d.fuel[id]={d:t.df[id]};
   for(const id in n.E)d.exp[id]={f:{...n.E[id]},t:{...(t.e[id]||{})}};
   for(const id in t.de)d.exp[id]={d:t.de[id]};
+  for(const id in n.P)d.pic[id]={f:{...n.P[id]},t:{...(t.p[id]||{})}};
+  for(const id in t.dp)d.pic[id]={d:t.dp[id]};
   if(w.delAt)d.deleted=w.delAt;
   return d;
 }
@@ -607,7 +729,7 @@ function setM(w,f,v){
 }
 function applyDoc(w,r){
   stamp(w);
-  const before=canon(w._v),merged=mergeDoc(docOf(w),r),M=merged.meta,t=w._t={m:{...M.t},l:{},f:{},dl:{},df:{},e:{},de:{}};
+  const before=canon(w._v),merged=mergeDoc(docOf(w),r),M=merged.meta,t=w._t={m:{...M.t},l:{},f:{},dl:{},df:{},e:{},de:{},p:{},dp:{}};
   META.forEach(f=>{if(M.f&&f in M.f)setM(w,f,M.f[f])});
   const lm=new Map(w.locs.map(l=>[String(l.id),l])),lo=[];
   for(const k in merged.locs){const e=merged.locs[k];
@@ -624,6 +746,11 @@ function applyDoc(w,r){
     if(e.d){t.de[k]=e.d;continue}
     const x=em.get(k)||{id:isNaN(Number(k))?k:Number(k)};EXPF.forEach(f=>{if(f in e.f)x[f]=e.f[f]});t.e[k]={...e.t};eo.push(x)}
   eo.sort((a,b)=>a.id-b.id);w.exp=eo;
+  const pm=new Map((w.pics||[]).map(x=>[String(x.id),x])),po=[];
+  for(const k in merged.pic){const e=merged.pic[k];
+    if(e.d){t.dp[k]=e.d;continue}
+    const x=pm.get(k)||{id:k};PICF.forEach(f=>{if(f in e.f)x[f]=e.f[f]});t.p[k]={...e.t};po.push(x)}
+  po.sort((a,b)=>(a.t-b.t)||(a.id<b.id?-1:1));w.pics=po;
   w._v=norm(w,true);
   return{changed:before!==canon(w._v),push:canon(stripU(merged))!==canon(stripU(r))};
 }
@@ -784,6 +911,7 @@ document.addEventListener('click',e=>{
   else if(a==='arrdest'){w.arrived=null;w.endAt=Date.now();save();render()}
   else if(a==='arrhome'){askEndOdo(w,()=>{w.homeAt=Date.now();save();render()})}
   else if(a==='unend'){w.endAt=null;w.homeAt=null;save();render()}
+  else if(a==='phretry'){retryPh(w)}
   else if(a==='finx'){const f=document.querySelector('.fin');if(f)f.remove()}
   else if(a==='plmap'){S.fullPL=!S.fullPL;save();render()}
   else if(a==='addp'){migrate(w);w.names=w.names||[];let mx=0;w.names.forEach(p=>{const n=parseInt(String(p.i).slice(1));if(n>mx)mx=n});
@@ -815,7 +943,7 @@ document.addEventListener('click',e=>{
   else if(a==='pull')listCloud();
   else if(a==='dlc'){const id=b.dataset.id,t=cloudList.find(x=>x.id===id);
     const nw={id:Date.now(),cid:id,name:(t&&t.name)||'Urbex',date:(t&&t.date)||today(),locs:[],pc:0};
-    nw._t={m:{},l:{},f:{},dl:{},df:{},e:{},de:{}};nw._v=norm(nw,true);nw._pull=1;
+    nw._t={m:{},l:{},f:{},dl:{},df:{},e:{},de:{},p:{},dp:{}};nw._v=norm(nw,true);nw._pull=1;
     S.w.push(nw);S.cur=nw.id;S.tab='d';cloudList=cloudList.filter(x=>x.id!==id);save();render();syncTrip(nw,true)}
   else if(a==='wk'){let wk=$('#wk').value.trim().replace(/\/+$/,'');if(wk&&!/^https?:\/\//i.test(wk))wk='https://'+wk;S.worker=wk;S.key=$('#kk').value;save();alert('Zapisano')}
   else if(a==='add')addPlaces();
@@ -845,8 +973,10 @@ document.addEventListener('change',async e=>{
   if(e.target.id==='o-h'){W().hw=e.target.checked;W().routed=false;save();render();return}
   if(e.target.id!=='pf')return;
   const w=W();db=db||await openDB();if(!db){alert('Ta przeglądarka nie pozwala zapisać zdjęć.');return}
-  for(const f of e.target.files){await new Promise(r=>{const q=st('readwrite').add({wid:w.id,name:f.name,t:Date.now(),blob:f});q.onsuccess=r;q.onerror=r});w.pc=(w.pc||0)+1}
-  save();viewF(w);
+  const files=[...e.target.files];let k=0,bad=0;
+  for(const f of files){const r=await putP({pid:newPid(),wid:w.id,name:f.name,t:Date.now()+(k++),blob:f});if(r)w.pc=(w.pc||0)+1;else bad++}
+  e.target.value='';if(bad)alert('Nie udało się zapisać '+bad+' zdjęć w telefonie (brak miejsca?).');
+  save();mountPhotos(w);pumpUp(w);
 });
 
 document.addEventListener('visibilitychange',()=>{
@@ -866,8 +996,11 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 setInterval(()=>{if(document.visibilityState==='visible'){const w=W();if(w&&w.cid)syncTrip(w)}},15000);
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pumpUp(W())});
+addEventListener('online',()=>pumpUp(W()));
 S.w.forEach(migrate);save();
 render();
+(async()=>{db=db||await openDB();if(db){for(const x of S.w)x.pc=(await photos(x.id)).length;save();paintPh()}pumpUp(W())})();
 </script>
 </body>
 </html>

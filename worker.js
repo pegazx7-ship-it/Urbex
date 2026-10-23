@@ -1,9 +1,31 @@
-// Urbex Worker v2: wspólna synchronizacja wypraw (KV) + rozwijanie skróconych linków Google Maps
-// Wymaga: KV binding "TRIPS" oraz sekretu "KEY" (hasło dostępu)
+// Urbex Worker v3: synchronizacja wypraw (KV) + rozwijanie linków Google Maps + zdjęcia w Telegramie
+// Wymaga: KV binding "TRIPS", sekretu "KEY" (hasło), sekretu "BOT_TOKEN" i zmiennej "CHAT_ID"
 const ORIGIN = 'https://pegazx7-ship-it.github.io';
 const SHORT = /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)\//;
 const COORDS = /@-?\d+\.\d+,-?\d+\.\d+|!3d-?\d+\.\d+!4d-?\d+\.\d+|[?&](q|ll)=-?\d+\.\d+/;
 const ID = /^[0-9A-Za-z_-]{1,40}$/;
+
+const FID = /^[0-9A-Za-z_-]{10,300}$/;
+const TG = 'https://api.telegram.org/';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+// wywołanie metody Bot API; przy 429 czeka i ponawia
+async function tg(env, method, body, tries = 3) {
+  let d = null;
+  for (let i = 0; i < tries; i++) {
+    let r;
+    try { r = await fetch(TG + 'bot' + env.BOT_TOKEN + '/' + method, { method: 'POST', body }); }
+    catch (e) { return { ok: false, description: 'brak połączenia z Telegramem' }; }
+    d = null; try { d = await r.json(); } catch (e) {}
+    if (d && d.ok) return d;
+    if (r.status === 429 && i < tries - 1) {
+      const ra = Math.min((d && d.parameters && d.parameters.retry_after) || 3, 20);
+      await sleep(ra * 1000 + 200);
+      continue;
+    }
+    break;
+  }
+  return d || { ok: false, description: 'brak odpowiedzi Telegrama' };
+}
 
 /* --- wspólna logika łączenia zmian (ta sama w Workerze i w aplikacji) --- */
 const canon=v=>JSON.stringify(v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(y=>[y,x[y]])):x);
@@ -26,7 +48,7 @@ function mergeMap(a,b){
 }
 function mergeDoc(a,b){
   a=a||{};b=b||{};
-  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel),exp:mergeMap(a.exp,b.exp)};
+  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel),exp:mergeMap(a.exp,b.exp),pic:mergeMap(a.pic,b.pic)};
   const del=Math.max(a.deleted||0,b.deleted||0);if(del)o.deleted=del;
   return o;
 }
@@ -63,6 +85,57 @@ export default {
       } catch (e) { return j({ error: 'błąd rozwijania' }, 502); }
     }
 
+    // ---- zdjęcia w Telegramie ----
+    if (url.pathname === '/topic' || url.pathname === '/photo' || url.pathname.startsWith('/file/')) {
+      if (!env.BOT_TOKEN || !env.CHAT_ID) return j({ error: 'Brak BOT_TOKEN lub CHAT_ID w ustawieniach Workera.' }, 500);
+    }
+    if (url.pathname === '/topic' && req.method === 'POST') {
+      let b; try { b = await req.json(); } catch (e) { b = {}; }
+      const name = String((b && b.name) || 'Urbex').slice(0, 100);
+      const d = await tg(env, 'createForumTopic', new URLSearchParams({ chat_id: env.CHAT_ID, name }));
+      return d.ok ? j({ tid: d.result.message_thread_id }) : j({ error: d.description || 'błąd Telegrama' }, 502);
+    }
+    if (url.pathname === '/photo' && req.method === 'POST') {
+      if (Number(req.headers.get('Content-Length') || 0) > 20e6) return j({ error: 'zdjęcie za duże' }, 413);
+      const buf = await req.arrayBuffer();
+      if (!buf.byteLength) return j({ error: 'puste zdjęcie' }, 400);
+      if (buf.byteLength > 20e6) return j({ error: 'zdjęcie za duże' }, 413);
+      let type = (req.headers.get('Content-Type') || '').split(';')[0];
+      if (!/^image\//.test(type)) type = 'image/jpeg';
+      const tid = url.searchParams.get('tid') || '';
+      const cap = (url.searchParams.get('cap') || '').slice(0, 200);
+      const send = withThread => {
+        const fd = new FormData();
+        fd.append('chat_id', env.CHAT_ID);
+        if (withThread) fd.append('message_thread_id', tid); else if (cap) fd.append('caption', cap);
+        fd.append('photo', new Blob([buf], { type }), 'foto.jpg');
+        return tg(env, 'sendPhoto', fd, 4);
+      };
+      const hasT = /^\d+$/.test(tid);
+      let d = await send(hasT);
+      if (!d.ok && hasT && /thread|topic/i.test(d.description || '')) d = await send(false);
+      if (!d.ok) return j({ error: d.description || 'błąd Telegrama' }, 502);
+      const ph = ((d.result && d.result.photo) || []).slice().sort((a, b) => a.width * a.height - b.width * b.height);
+      if (!ph.length) return j({ error: 'Telegram nie zwrócił zdjęcia' }, 502);
+      const full = ph[ph.length - 1], th = ph.find(p => p.width >= 300) || ph[0];
+      return j({ fid: full.file_id, th: th.file_id, mid: d.result.message_id });
+    }
+    const fm = url.pathname.match(/^\/file\/([^/]+)$/);
+    if (fm && req.method === 'GET') {
+      if (!FID.test(fm[1])) return j({ error: 'zły identyfikator pliku' }, 400);
+      const g = await tg(env, 'getFile', new URLSearchParams({ file_id: fm[1] }), 2);
+      if (!g.ok || !g.result || !g.result.file_path) return j({ error: g.description || 'nie ma takiego pliku' }, 404);
+      let r;
+      try { r = await fetch(TG + 'file/bot' + env.BOT_TOKEN + '/' + g.result.file_path); } catch (e) { return j({ error: 'błąd pobierania' }, 502); }
+      if (!r.ok) return j({ error: 'błąd pobierania' }, 502);
+      const ct = r.headers.get('Content-Type') || '';
+      return new Response(r.body, { headers: {
+        'Access-Control-Allow-Origin': ORIGIN,
+        'Content-Type': /^image\//.test(ct) ? ct : 'image/jpeg',
+        'Cache-Control': 'private, max-age=604800'
+      } });
+    }
+
     // lista wypraw w chmurze (bez usuniętych)
     if (url.pathname === '/trips' && req.method === 'GET') {
       const l = await env.TRIPS.list({ prefix: 't:' });
@@ -83,7 +156,7 @@ export default {
       }
       if (req.method === 'POST') {
         const txt = await req.text();
-        if (txt.length > 300000) return j({ error: 'za duże' }, 413);
+        if (txt.length > 400000) return j({ error: 'za duże' }, 413);
         let inc; try { inc = JSON.parse(txt); } catch (e) { return j({ error: 'zły JSON' }, 400); }
         if (!inc || inc.v !== 2 || typeof inc !== 'object') return j({ error: 'zły format' }, 400);
         inc.id = id;
@@ -108,7 +181,7 @@ export default {
       }
       if (req.method === 'PUT') {
         const txt = await req.text();
-        if (txt.length > 300000) return j({ error: 'za duże' }, 413);
+        if (txt.length > 400000) return j({ error: 'za duże' }, 413);
         let inc; try { inc = JSON.parse(txt); } catch (e) { return j({ error: 'zły JSON' }, 400); }
         inc.updated = Date.now();
         await env.TRIPS.put('current', JSON.stringify(inc));
