@@ -26,7 +26,7 @@ function mergeMap(a,b){
 }
 function mergeDoc(a,b){
   a=a||{};b=b||{};
-  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel)};
+  const o={id:b.id||a.id,v:2,meta:mergeEnt(a.meta,b.meta),locs:mergeMap(a.locs,b.locs),fuel:mergeMap(a.fuel,b.fuel),exp:mergeMap(a.exp,b.exp)};
   const del=Math.max(a.deleted||0,b.deleted||0);if(del)o.deleted=del;
   return o;
 }
@@ -83,7 +83,7 @@ export default {
       }
       if (req.method === 'POST') {
         const txt = await req.text();
-        if (txt.length > 200000) return j({ error: 'za duże' }, 413);
+        if (txt.length > 300000) return j({ error: 'za duże' }, 413);
         let inc; try { inc = JSON.parse(txt); } catch (e) { return j({ error: 'zły JSON' }, 400); }
         if (!inc || inc.v !== 2 || typeof inc !== 'object') return j({ error: 'zły format' }, 400);
         inc.id = id;
@@ -108,7 +108,7 @@ export default {
       }
       if (req.method === 'PUT') {
         const txt = await req.text();
-        if (txt.length > 200000) return j({ error: 'za duże' }, 413);
+        if (txt.length > 300000) return j({ error: 'za duże' }, 413);
         let inc; try { inc = JSON.parse(txt); } catch (e) { return j({ error: 'zły JSON' }, 400); }
         inc.updated = Date.now();
         await env.TRIPS.put('current', JSON.stringify(inc));
