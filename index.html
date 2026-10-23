@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;800&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Urbex</title>
 <style>
@@ -453,7 +454,7 @@ async function shareBlob(blob,name){
 }
 function openViewer(w,items,i){
   const o=document.createElement('div');o.className='ov lb';o.setAttribute('role','dialog');o.setAttribute('aria-label','Podgląd zdjęcia');
-  o.innerHTML=`<div class="lbt" id="lbc"></div><img id="lbi" alt=""><div class="row"><button class="s" id="lb-p" aria-label="Poprzednie zdjęcie">‹ Wstecz</button><button class="s" id="lb-n" aria-label="Następne zdjęcie">Dalej ›</button></div><div class="row"><button class="s" id="cl">Zamknij</button><button class="s" id="lb-s">Zapisz / Udostępnij</button><button id="rm">Usuń</button></div>`;
+  o.innerHTML=`<div class="lbt" id="lbc"></div><img id="lbi" alt=""><div class="row"><button class="s" id="cl">Zamknij</button><button class="s" id="rm">Usuń</button><button id="lb-s">Pobierz</button></div>`;
   document.body.appendChild(o);
   let cur=i,gen=0;
   const q=s=>o.querySelector(s);
@@ -470,10 +471,10 @@ function openViewer(w,items,i){
   document.addEventListener('keydown',key);
   let x0=null;o.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
   o.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>60)show(cur+(dx<0?1:-1))},{passive:true});
-  q('#cl').onclick=close;q('#lb-p').onclick=()=>show(cur-1);q('#lb-n').onclick=()=>show(cur+1);
+  q('#cl').onclick=close;
   q('#lb-s').onclick=async()=>{const it=items[cur];try{
     const b=it.k==='l'?it.p.blob:await (await fetch(await picURL(it.p.fid,true))).blob();
-    await shareBlob(b,'urbex_'+(w.date||'')+'_'+(cur+1)+'.jpg')}catch(e){alert('Nie udało się zapisać zdjęcia: '+e.message)}};
+    await shareBlob(b,'urbex_'+(w.date||'')+'_'+(cur+1)+'.jpg')}catch(e){alert('Nie udało się pobrać zdjęcia: '+e.message)}};
   q('#rm').onclick=async()=>{const it=items[cur];
     if(!confirm(it.k==='s'?'Usunąć to zdjęcie z wyprawy? Zniknie z aplikacji u wszystkich, ale zostanie w grupie na Telegramie.':'Usunąć to zdjęcie z telefonu?'))return;
     if(it.k==='s')w.pics=w.pics.filter(p=>p.id!==it.p.id);else{await delP(it.p.id);w.pc=Math.max(0,(w.pc||1)-1)}
