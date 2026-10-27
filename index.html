@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Urbex">
-<meta name="theme-color" content="#F1F5F2">
+<meta name="theme-color" content="#E4EFEC">
 <script>try{var t=localStorage.getItem("urbex_theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;800&display=swap">
@@ -107,6 +107,44 @@ select{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--bd);bord
 .ph{position:relative;aspect-ratio:1;background:var(--c2);border-radius:12px;overflow:hidden}.ph img{display:block;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;font-size:0;color:transparent;border-radius:0}
 .ph .bd{position:absolute;right:6px;top:6px;background:#000b;color:#fff;border-radius:10px;font-size:11px;padding:2px 7px;font-weight:700}
 .lbt{color:#fff;text-align:center;font-size:13px;min-height:18px}.lb img{touch-action:pan-y}
+
+/* ===== Liquid Glass ===== */
+:root{--g1:rgba(255,255,255,.8);--g2:rgba(255,255,255,.36);--g3:rgba(255,255,255,.55);--gh:rgba(255,255,255,.95);--gs:rgba(14,42,43,.14);--gin:rgba(255,255,255,.62);--gm:rgba(236,245,242,.86);--b1:#EEF6F3;--bl1:rgba(198,244,50,.45);--bl2:rgba(25,182,166,.3);--bl3:rgba(245,158,59,.28);--bl4:rgba(124,92,255,.2);--bg:#E4EFEC;--card:rgba(255,255,255,.5);--c2:rgba(255,255,255,.55);--tx:#0E2A2B;--mut:#3F5F5B;--ac:#2F6663;--btn:#C6F432;--on:#0A1415;--line:#2F6663;--bd:rgba(255,255,255,.8);--cont:#1D4A48;--done:#7E9995;--mapbg:#0E2A2B}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--g1:rgba(255,255,255,.22);--g2:rgba(255,255,255,.06);--g3:rgba(255,255,255,.12);--gh:rgba(255,255,255,.5);--gs:rgba(0,0,0,.34);--gin:rgba(255,255,255,.08);--gm:rgba(9,24,27,.8);--b1:#0C2527;--bl1:rgba(198,244,50,.26);--bl2:rgba(25,182,166,.32);--bl3:rgba(245,158,59,.24);--bl4:rgba(124,92,255,.28);--bg:#06121A;--card:rgba(255,255,255,.1);--c2:rgba(255,255,255,.14);--tx:#F4FAF7;--mut:rgba(244,250,247,.78);--ac:#C6F432;--btn:#C6F432;--on:#0A1415;--line:#C6F432;--bd:rgba(255,255,255,.26);--cont:rgba(255,255,255,.07);--done:#8FAAA6;--mapbg:#06121A}}
+:root[data-theme="dark"]{--g1:rgba(255,255,255,.22);--g2:rgba(255,255,255,.06);--g3:rgba(255,255,255,.12);--gh:rgba(255,255,255,.5);--gs:rgba(0,0,0,.34);--gin:rgba(255,255,255,.08);--gm:rgba(9,24,27,.8);--b1:#0C2527;--bl1:rgba(198,244,50,.26);--bl2:rgba(25,182,166,.32);--bl3:rgba(245,158,59,.24);--bl4:rgba(124,92,255,.28);--bg:#06121A;--card:rgba(255,255,255,.1);--c2:rgba(255,255,255,.14);--tx:#F4FAF7;--mut:rgba(244,250,247,.78);--ac:#C6F432;--btn:#C6F432;--on:#0A1415;--line:#C6F432;--bd:rgba(255,255,255,.26);--cont:rgba(255,255,255,.07);--done:#8FAAA6;--mapbg:#06121A}
+html{background:var(--bg)}
+body{background:transparent;isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px 520px at 100% 6%,var(--bl1),transparent 70%),radial-gradient(560px 560px at -10% 42%,var(--bl2),transparent 70%),radial-gradient(520px 520px at 108% 72%,var(--bl3),transparent 70%),radial-gradient(600px 600px at 0% 105%,var(--bl4),transparent 70%),linear-gradient(180deg,var(--b1),var(--bg))}
+.card{background:linear-gradient(145deg,var(--g1),var(--g2) 45%,var(--g3));-webkit-backdrop-filter:blur(24px) saturate(175%);backdrop-filter:blur(24px) saturate(175%);border:1px solid var(--bd);border-radius:26px;box-shadow:inset 0 1.5px 0 var(--gh),inset 0 -1px 0 var(--g3),0 14px 36px var(--gs)}
+.now,.ok{border:1.5px solid var(--line);box-shadow:inset 0 1.5px 0 var(--gh),0 0 30px rgba(198,244,50,.2),0 14px 36px var(--gs)}
+input,textarea,select{background:var(--gin);border:1px solid var(--bd);border-radius:16px;color:var(--tx);box-shadow:inset 0 2px 4px var(--gs),inset 0 1px 0 var(--g3)}
+input::placeholder,textarea::placeholder{color:var(--mut);opacity:.7}
+select option{background:var(--bg);color:var(--tx)}
+button,.btn{background:linear-gradient(180deg,#D6FA5C,#B7E524);color:#0A1415;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),0 8px 24px rgba(198,244,50,.32)}
+button.s,.btn.s{background:linear-gradient(145deg,var(--g1),var(--g2) 55%,var(--g3));color:var(--tx);border:1px solid var(--bd);-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 var(--gh),0 8px 22px var(--gs)}
+button.o,.btn.o{background:var(--gin)!important;color:var(--ac)!important;box-shadow:inset 0 0 0 1.5px var(--line),inset 0 1px 0 var(--gh)!important}
+.thm{color:var(--ac)}
+.chip{background:var(--gin);border:1px solid var(--bd);color:var(--tx);border-radius:16px;box-shadow:inset 0 1px 0 var(--gh)}
+.bar{left:14px;right:14px;max-width:440px;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));border:1px solid var(--bd);border-radius:32px;padding:7px;background:linear-gradient(135deg,var(--g1),var(--g2) 50%,var(--g3)),var(--gm);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:inset 0 1.5px 0 var(--gh),0 14px 40px var(--gs)}
+.bar button{border:1px solid transparent;border-radius:24px;color:var(--mut);box-shadow:none}
+.bar button.on{background:rgba(198,244,50,.18);color:var(--ac);border-color:rgba(198,244,50,.55);box-shadow:inset 0 1px 0 var(--gh),0 0 22px rgba(198,244,50,.25)}
+.mapw{background:linear-gradient(180deg,#0C2527,#06121A)}
+.cols .mapw{border:1px solid var(--bd);box-shadow:0 14px 36px var(--gs)}
+.sheet{margin:-26px -6px 0;padding:16px 6px 0;border-radius:34px 34px 0 0;background:linear-gradient(145deg,var(--g1),var(--g2) 42%,var(--g3));-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border:1px solid var(--bd);border-bottom:0;box-shadow:inset 0 1.5px 0 var(--gh),0 -16px 44px var(--gs)}
+.sheet .chips{margin:0 -6px;padding-left:6px;padding-right:6px}
+.hero{background:linear-gradient(145deg,var(--g1),var(--g2) 45%,var(--g3));color:var(--tx);border:1px solid var(--bd);border-radius:30px;margin:4px 0 12px;padding:18px 22px 20px;-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:inset 0 1.5px 0 var(--gh),0 18px 46px var(--gs)}
+.hero .mut{color:var(--mut)}.herobig{color:var(--ac);text-shadow:0 0 30px rgba(198,244,50,.3)}
+.ph{border:1px solid var(--bd);border-radius:18px;box-shadow:inset 0 1px 0 var(--gh)}
+.ov{background:rgba(3,10,13,.92)}
+.lbt{align-self:center;padding:8px 20px;border-radius:20px;color:#F4FAF7;min-height:0;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.lb .row{padding:8px;gap:8px;border-radius:38px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);flex:none}
+.lb .row button{min-height:56px;border-radius:28px}
+.lb button.s{color:#F4FAF7;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3)}
+.lb #rm{color:#FFC4A0}
+.ov2 .box{background:linear-gradient(145deg,var(--g1),var(--g2) 45%,var(--g3)),var(--gm);border:1px solid var(--bd);border-radius:30px;-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:inset 0 1.5px 0 var(--gh),0 24px 60px rgba(0,0,0,.5)}
+.fin-k div{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.card,.sheet,.bar,.hero,button.s,.btn.s,.ov2 .box{background:var(--gm)}}
+@media(prefers-reduced-transparency:reduce){.card,.sheet,.bar,.hero,button.s,.btn.s,.ov2 .box{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--gm)}}
 </style>
 </head>
 <body>
@@ -884,7 +922,7 @@ async function deleteTrip(w){
 
 function setTheme(t,persist){
   document.documentElement.setAttribute('data-theme',t);
-  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#0F1B1C':'#F1F5F2';
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#06121A':'#E4EFEC';
   document.querySelectorAll('.thm').forEach(b=>{b.innerHTML=t==='dark'?ICON.sun:ICON.moon});
   if(persist)try{localStorage.setItem('urbex_theme',t)}catch(e){}
 }
