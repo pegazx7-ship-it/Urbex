@@ -297,6 +297,8 @@ const fields=l=>`<label>Trasa</label><textarea rows="2" data-lid="${l.id}" data-
 ICON.link='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>';
 const dom=u=>{try{return new URL(lk(u)).hostname.replace(/^www\./,'')}catch(e){return ''}};
 const srcBtn=l=>l&&l.src?`<a class="btn s srcb" href="${esc(lk(l.src))}" target="_blank" rel="noopener">${ICON.link}Źródło${dom(l.src)?' · '+esc(dom(l.src)):''}</a>`:'';
+const srcBtnW=l=>l&&l.src?srcBtn(l).replace('class="btn s srcb"','class="btn s srcb w" style="margin-top:8px"'):'';
+const srcAdd=l=>l&&!l.src?`<details style="margin-top:6px"><summary>+ Dodaj link do opisu miejsca</summary><input data-lid="${l.id}" data-f="src" placeholder="https://urbexy.pl/…" autocapitalize="off"></details>`:'';
 function homeUrl(w){
   if(!w.start)return null;
   const av=[w.tolls!==false?'tolls':'',w.hw?'highways':''].filter(Boolean).join('%7C');
@@ -351,16 +353,16 @@ function viewDrive(w){
     main=`<div class="card ok"><div class="kick">${w.arrived.auto?'Jesteś na miejscu':'Dotarłem'} · ${fmt(w.arrived.t)}</div><div class="big">${esc(short(al.name,60))}</div>
      <label>Notatka z tego miejsca</label><textarea rows="2" data-lid="${al.id}" data-f="note">${esc(al.note||'')}</textarea></div>
      ${url?`<a class="btn go w" data-a="go" href="${url}" target="_blank" rel="noopener">Jedziemy dalej › ${esc(nm)}</a>
-     <div class="mut" style="margin-top:6px">Otworzy Google Maps z trasą przez pozostałe miejsca${w.dest?' do celu':''}.</div>`
+     <div class="mut" style="margin-top:6px">Otworzy Google Maps z trasą przez pozostałe miejsca${w.dest?' do celu':''}.</div>${c?`<div class="mut" style="margin-top:10px">Następne miejsce: <b>${esc(short(c.name,40))}</b></div>${srcBtnW(c)}`:''}`
      :`<div class="card">Koniec trasy ✓</div><button class="s w" data-a="go">Zamknij</button>`}
      <button class="s w" style="margin-top:10px" data-a="undo">↩ Cofnij „Dotarłem”</button>`;
   }else if(c){
     main=`<div class="card now"><div class="kick">Cel ${done.length+1} z ${w.locs.length} · ${w.tolls!==false?'bez opłat':'płatne drogi dozwolone'}</div>
      <label>Trasa</label><textarea class="bigin" rows="2" data-lid="${c.id}" data-f="name" placeholder="Co to za miejsce, np. Stara fabryka, wejście od tyłu">${esc(c.name||'')}</textarea>
      ${linkRow(c)}
-     <div class="row">${mapLinks(c)}${srcBtn(c)}</div>
+     <div class="row">${mapLinks(c)}</div>
      ${done.length?'<button class="s w" style="margin-top:8px" data-a="prev">← Poprzednie miejsce</button>':''}
-     <div class="row"><button class="go" data-a="mark">Dotarłem</button><a class="btn go o" data-a="nav" href="${url}" target="_blank" rel="noopener">Nawiguj</a></div></div>`;
+     <div class="row"><button class="go" data-a="mark">Dotarłem</button><a class="btn go o" data-a="nav" href="${url}" target="_blank" rel="noopener">Nawiguj</a></div>${srcBtnW(c)}${srcAdd(c)}</div>`;
   }else if(w.homeAt){
     const k=costs(w);
     main=`<div class="card ok"><div class="kick">Wyprawa zakończona · ${fmt(w.homeAt)}</div><div class="big">Jesteście w domu ✓</div>
@@ -379,7 +381,7 @@ function viewDrive(w){
   }
   const rest=todo.slice(1);
   $('#body').innerHTML=mapSvg(w)+`<div class="sheet">`+main+`
-  ${rest.length?`<h2>Dalej (${rest.length})</h2><div class="chips">${rest.map((l,i)=>`<button class="chip" data-a="pin" data-id="${l.id}">${lab(done.length+i+2,l.name,18)||(done.length+i+2)}</button>`).join('')}</div>
+  ${rest.length?`<h2>Dalej (${rest.length})</h2><div class="chips">${rest.map((l,i)=>`<button class="chip" data-a="pin" data-id="${l.id}">${lab(done.length+i+2,l.name,18)||(done.length+i+2)}</button>`).join('')}</div><div id="chipinfo"></div>
   <details><summary>Edytuj opisy kolejnych miejsc</summary>${rest.map((l,i)=>`<div class="card"><b>${done.length+i+2}.</b>${fields(l)}<div class="row">${mapLinks(l)}${srcBtn(l)}</div></div>`).join('')}</details>`:''}
   <h2>Archiwum (${done.length})</h2>${done.map(l=>`<div class="card done"><b>✓ ${esc(short(l.name,60))}</b><div class="mut">${fmt(l.done)}</div>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}<button class="s" style="margin-top:8px;min-height:40px" data-a="undoid" data-id="${l.id}">↩ Cofnij</button></div>`).join('')||'<div class="mut">Jeszcze nic.</div>'}
   <h2>Chmura</h2><div class="card"><button class="s w" data-a="push">${w.cid?'Synchronizuj teraz':'Udostępnij wyprawę w chmurze'}</button><div id="sy" class="mut" style="margin-top:8px">${esc(synTxt)}</div></div>
@@ -932,7 +934,9 @@ document.addEventListener('click',e=>{
   else if(a==='pin'){const el=$('#pinfo');if(!el||!w)return;const id=b.getAttribute('data-id');let t;
     if(id==='start')t='Start: '+((w.start&&w.start.name)||'');
     else if(id==='dest')t='Cel: '+((w.dest&&w.dest.name)||'');
-    else{const i=w.locs.findIndex(x=>String(x.id)===id),l=w.locs[i];if(!l)return;t=(i+1)+'. '+(l.name||'Bez opisu')+(l.done?' · odwiedzone '+fmt(l.done):'')}
+    else{const i=w.locs.findIndex(x=>String(x.id)===id),l=w.locs[i];if(!l)return;t=(i+1)+'. '+(l.name||'Bez opisu')+(l.done?' · odwiedzone '+fmt(l.done):'');
+      const ci=$('#chipinfo');if(ci&&b.classList.contains('chip'))ci.innerHTML=`<div class="card" style="margin-top:6px"><b>${i+1}. ${esc(short(l.name||'Bez opisu',60))}</b>${l.note?`<div class="mut">${esc(l.note)}</div>`:''}<div class="row" style="margin-top:8px">${mapLinks(l)}<a class="btn s" href="${gm(l)}" target="_blank" rel="noopener">Mapa</a></div>${srcBtnW(l)||'<div class="mut" style="margin-top:8px">Brak linku do opisu tego miejsca.</div>'}${srcAdd(l)}</div>`;
+      if(l.src){el.textContent='';el.append(t+' · ');const ln=document.createElement('a');ln.href=lk(l.src);ln.target='_blank';ln.rel='noopener';ln.textContent='Źródło'+(dom(l.src)?' · '+dom(l.src):'');el.append(ln);return}}
     el.textContent=t}
   else if(a==='mark'){const c=w.locs.find(l=>!l.done);if(!c)return;
     if(needOdo(w)){askStartOdo(w,()=>{const c2=w.locs.find(l=>!l.done);if(c2)arrive(w,c2,false)});return}
